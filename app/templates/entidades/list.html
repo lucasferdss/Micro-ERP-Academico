@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Entidades - Micro ERP{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div>
+        <h1>Entidades</h1>
+        <p>Cadastro de clientes e fornecedores.</p>
+      </div>
+      <div>
+        <a href="{{ url_for('entidades.novo') }}" style="background:#2563eb;color:#fff;padding:10px 14px;border-radius:8px;text-decoration:none;">Nova Entidade</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    {% if entidades %}
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">ID</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Tipo</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Nome / Razão Social</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">CPF/CNPJ</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">E-mail</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Telefone</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Status</th>
+              <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entidade in entidades %}
+              <tr>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ entidade.id }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ entidade.tipo_entidade }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ entidade.nome_razao_social }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ entidade.cpf_cnpj }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ entidade.email or '-' }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ entidade.telefone or '-' }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">
+                  {% if entidade.ativo %}
+                    <span style="background:#dcfce7;color:#166534;padding:6px 10px;border-radius:999px;font-size:12px;">Ativo</span>
+                  {% else %}
+                    <span style="background:#fee2e2;color:#991b1b;padding:6px 10px;border-radius:999px;font-size:12px;">Inativo</span>
+                  {% endif %}
+                </td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <a href="{{ url_for('entidades.editar', id=entidade.id) }}" style="text-decoration:none;padding:8px 12px;border-radius:8px;background:#e0e7ff;color:#1e3a8a;">Editar</a>
+
+                    <form method="POST" action="{{ url_for('entidades.toggle_ativo', id=entidade.id) }}" style="display:inline;">
+                      <button type="submit" style="border:0;padding:8px 12px;border-radius:8px;cursor:pointer;background:#f3f4f6;color:#111827;">
+                        {% if entidade.ativo %}Desativar{% else %}Ativar{% endif %}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>Nenhuma entidade cadastrada ainda.</p>
+    {% endif %}
+  </div>
+{% endblock %}

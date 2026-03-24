@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if conta %}Editar Conta{% else %}Nova Conta{% endif %} - Micro ERP
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>{% if conta %}Editar Conta{% else %}Nova Conta{% endif %}</h1>
+    <p>Preencha os dados da conta contábil.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;">
+        <div>
+          <label>Código</label>
+          <input type="text" name="codigo" required
+                 value="{{ conta.codigo if conta else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Nome</label>
+          <input type="text" name="nome" required
+                 value="{{ conta.nome if conta else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Tipo da Conta</label>
+          <select name="tipo_conta" required style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+            <option value="">Selecione</option>
+            {% for tipo in tipos_conta %}
+              <option value="{{ tipo }}" {% if conta and conta.tipo_conta == tipo %}selected{% endif %}>{{ tipo }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label>Natureza</label>
+          <select name="natureza" required style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+            <option value="">Selecione</option>
+            {% for nat in naturezas %}
+              <option value="{{ nat }}" {% if conta and conta.natureza == nat %}selected{% endif %}>{{ nat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label>Conta Pai</label>
+          <select name="conta_pai_id" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+            <option value="">Sem conta pai</option>
+            {% for pai in contas_pai %}
+              <option value="{{ pai.id }}"
+                {% if conta and conta.conta_pai_id == pai.id %}selected{% endif %}>
+                {{ pai.codigo }} - {{ pai.nome }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:30px;">
+          <input type="checkbox" name="aceita_lancamento" id="aceita_lancamento"
+                 {% if not conta or conta.aceita_lancamento %}checked{% endif %}>
+          <label for="aceita_lancamento" style="margin:0;">Aceita lançamento</label>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button type="submit" style="background:#2563eb;color:#fff;border:0;padding:12px 18px;border-radius:8px;cursor:pointer;">
+          Salvar
+        </button>
+        <a href="{{ url_for('plano_contas.listar') }}" style="background:#e5e7eb;color:#111827;padding:12px 18px;border-radius:8px;text-decoration:none;">
+          Voltar
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

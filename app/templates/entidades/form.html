@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if entidade %}Editar Entidade{% else %}Nova Entidade{% endif %} - Micro ERP
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>{% if entidade %}Editar Entidade{% else %}Nova Entidade{% endif %}</h1>
+    <p>Preencha os dados do cliente ou fornecedor.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;">
+        <div>
+          <label>Tipo</label>
+          <select name="tipo_entidade" required style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+            <option value="">Selecione</option>
+            <option value="CLIENTE" {% if entidade and entidade.tipo_entidade == 'CLIENTE' %}selected{% endif %}>Cliente</option>
+            <option value="FORNECEDOR" {% if entidade and entidade.tipo_entidade == 'FORNECEDOR' %}selected{% endif %}>Fornecedor</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Nome / Razão Social</label>
+          <input type="text" name="nome_razao_social" required
+                 value="{{ entidade.nome_razao_social if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Nome Fantasia</label>
+          <input type="text" name="nome_fantasia"
+                 value="{{ entidade.nome_fantasia if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>CPF/CNPJ</label>
+          <input type="text" name="cpf_cnpj" required
+                 value="{{ entidade.cpf_cnpj if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Inscrição Estadual</label>
+          <input type="text" name="inscricao_estadual"
+                 value="{{ entidade.inscricao_estadual if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>E-mail</label>
+          <input type="email" name="email"
+                 value="{{ entidade.email if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Telefone</label>
+          <input type="text" name="telefone"
+                 value="{{ entidade.telefone if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>CEP</label>
+          <input type="text" name="cep"
+                 value="{{ entidade.cep if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Logradouro</label>
+          <input type="text" name="logradouro"
+                 value="{{ entidade.logradouro if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Número</label>
+          <input type="text" name="numero"
+                 value="{{ entidade.numero if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Bairro</label>
+          <input type="text" name="bairro"
+                 value="{{ entidade.bairro if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Cidade</label>
+          <input type="text" name="cidade"
+                 value="{{ entidade.cidade if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>UF</label>
+          <input type="text" name="uf" maxlength="2"
+                 value="{{ entidade.uf if entidade else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button type="submit" style="background:#2563eb;color:#fff;border:0;padding:12px 18px;border-radius:8px;cursor:pointer;">
+          Salvar
+        </button>
+        <a href="{{ url_for('entidades.listar') }}" style="background:#e5e7eb;color:#111827;padding:12px 18px;border-radius:8px;text-decoration:none;">
+          Voltar
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

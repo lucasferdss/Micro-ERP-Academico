@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if produto %}Editar Produto{% else %}Novo Produto{% endif %} - Micro ERP
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>{% if produto %}Editar Produto{% else %}Novo Produto{% endif %}</h1>
+    <p>Preencha os dados do produto.</p>
+  </div>
+
+  <div class="card">
+    <form method="POST">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;">
+        <div>
+          <label>SKU</label>
+          <input type="text" name="sku" required
+                 value="{{ produto.sku if produto else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Nome</label>
+          <input type="text" name="nome" required
+                 value="{{ produto.nome if produto else '' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Unidade de Medida</label>
+          <input type="text" name="unidade_medida"
+                 value="{{ produto.unidade_medida if produto else 'UN' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Preço de Custo</label>
+          <input type="text" name="preco_custo" required
+                 value="{{ produto.preco_custo if produto else '0.00' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Preço de Venda</label>
+          <input type="text" name="preco_venda" required
+                 value="{{ produto.preco_venda if produto else '0.00' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Estoque Atual</label>
+          <input type="text" name="estoque_atual" required
+                 value="{{ produto.estoque_atual if produto else '0.000' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div>
+          <label>Estoque Mínimo</label>
+          <input type="text" name="estoque_minimo" required
+                 value="{{ produto.estoque_minimo if produto else '0.000' }}"
+                 style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">
+        </div>
+
+        <div style="grid-column:1 / -1;">
+          <label>Descrição</label>
+          <textarea name="descricao" rows="4"
+                    style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;">{{ produto.descricao if produto else '' }}</textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button type="submit" style="background:#2563eb;color:#fff;border:0;padding:12px 18px;border-radius:8px;cursor:pointer;">
+          Salvar
+        </button>
+        <a href="{{ url_for('produtos.listar') }}" style="background:#e5e7eb;color:#111827;padding:12px 18px;border-radius:8px;text-decoration:none;">
+          Voltar
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}
