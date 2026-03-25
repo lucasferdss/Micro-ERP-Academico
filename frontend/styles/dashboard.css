@@ -1,0 +1,29 @@
+.dashboard-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  margin-bottom: 20px;
+}
+
+.dashboard-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.dashboard-menu-item {
+  display: block;
+  background: white;
+  border-radius: 12px;
+  padding: 18px;
+  text-decoration: none;
+  color: #111827;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+}
+
+.dashboard-menu-item:hover {
+  border-color: #2563eb;
+}

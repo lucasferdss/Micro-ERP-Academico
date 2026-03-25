@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables
+.env
+*.env
+
+# Flask / local instance
+instance/
+*.db
+*.sqlite3
+
+# Alembic / migration cache
+migrations/__pycache__/
+
+# VS Code / editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test / coverage / cache
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node (caso use no frontend depois)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build / dist
+dist/
+build/
+
+# OS generated files
+Desktop.ini

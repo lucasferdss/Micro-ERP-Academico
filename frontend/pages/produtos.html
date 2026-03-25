@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produtos - Micro ERP</title>
+  <link rel="stylesheet" href="/styles/global.css">
+  <link rel="stylesheet" href="/styles/produtos.css">
+</head>
+<body>
+  <header>
+    <div class="brand">Micro ERP</div>
+    <div class="user-area">
+      <a href="/pages/dashboard">Dashboard</a>
+      <a href="/logout">Sair</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="page-header">
+        <div>
+          <h1>Produtos</h1>
+          <p>Cadastro, edição e status.</p>
+        </div>
+
+        <div>
+          <a href="/pages/dashboard" class="btn-secondary">Voltar</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Formulário de Produto</h2>
+      <form id="produto-form">
+        <div class="form-grid">
+          <div>
+            <label class="form-label" for="sku">SKU</label>
+            <input id="sku" class="form-input" type="text" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="nome">Nome</label>
+            <input id="nome" class="form-input" type="text" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="unidade_medida">Unidade de Medida</label>
+            <input id="unidade_medida" class="form-input" type="text" value="UN">
+          </div>
+
+          <div>
+            <label class="form-label" for="preco_custo">Preço de Custo</label>
+            <input id="preco_custo" class="form-input" type="text" value="0.00" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="preco_venda">Preço de Venda</label>
+            <input id="preco_venda" class="form-input" type="text" value="0.00" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="estoque_atual">Estoque Atual</label>
+            <input id="estoque_atual" class="form-input" type="text" value="0.000" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="estoque_minimo">Estoque Mínimo</label>
+            <input id="estoque_minimo" class="form-input" type="text" value="0.000" required>
+          </div>
+
+          <div class="form-group-full">
+            <label class="form-label" for="descricao">Descrição</label>
+            <textarea id="descricao" class="form-textarea" rows="4"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="submit-button" type="submit" class="btn-primary">Salvar</button>
+          <button id="cancel-edit-button" type="button" class="btn-secondary" style="display:none;">Cancelar edição</button>
+        </div>
+
+        <p id="form-status"></p>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Lista de Produtos</h2>
+      <p id="produtos-status"></p>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>SKU</th>
+              <th>Nome</th>
+              <th>Unidade</th>
+              <th>Preço Custo</th>
+              <th>Preço Venda</th>
+              <th>Margem</th>
+              <th>Estoque</th>
+              <th>Mínimo</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="produtos-tbody">
+            <tr>
+              <td colspan="11">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/produtos.js"></script>
+</body>
+</html>

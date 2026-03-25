@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Micro ERP</title>
+  <link rel="stylesheet" href="/styles/global.css">
+  <link rel="stylesheet" href="/styles/dashboard.css">
+</head>
+<body>
+  <header>
+    <div class="brand">Micro ERP</div>
+    <div class="user-area">
+      <span id="user-name">...</span> (<span id="user-role">...</span>)
+      <a href="#" id="logout-link">Sair</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="dashboard-card">
+      <h1>Bem-vindo, <span id="user-name-inline">usuário</span>!</h1>
+      <p>Seu perfil é <strong><span id="user-role-inline">-</span></strong>.</p>
+      <p>Esse será o painel inicial do sistema.</p>
+      <p id="dashboard-status"></p>
+    </div>
+
+    <div class="dashboard-menu">
+      <a class="dashboard-menu-item" href="/pages/entidades">
+        <h3>Entidades</h3>
+        <p>Cadastro de clientes e fornecedores.</p>
+      </a>
+
+      <a class="dashboard-menu-item" href="/pages/produtos">
+        <h3>Produtos</h3>
+        <p>Cadastro de produtos, preços e estoque.</p>
+      </a>
+
+      <a class="dashboard-menu-item" href="/pages/plano-contas">
+        <h3>Plano de Contas</h3>
+        <p>Estrutura contábil do sistema.</p>
+      </a>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const syncUserFields = () => {
+      const name = document.getElementById("user-name").textContent;
+      const role = document.getElementById("user-role").textContent;
+      document.getElementById("user-name-inline").textContent = name;
+      document.getElementById("user-role-inline").textContent = role;
+    };
+
+    const observer = new MutationObserver(syncUserFields);
+    observer.observe(document.getElementById("user-name"), { childList: true });
+    observer.observe(document.getElementById("user-role"), { childList: true });
+  </script>
+  <script src="/scripts/dashboard_page.js"></script>
+</body>
+</html>

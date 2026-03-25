@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano de Contas - Micro ERP</title>
+  <link rel="stylesheet" href="/styles/global.css">
+  <link rel="stylesheet" href="/styles/plano_contas.css">
+</head>
+<body>
+  <header>
+    <div class="brand">Micro ERP</div>
+    <div class="user-area">
+      <a href="/pages/dashboard">Dashboard</a>
+      <a href="/logout">Sair</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="page-header">
+        <div>
+          <h1>Plano de Contas</h1>
+          <p>Cadastro, edição e status.</p>
+        </div>
+
+        <div>
+          <a href="/pages/dashboard" class="btn-secondary">Voltar</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Formulário de Conta</h2>
+      <form id="plano-conta-form">
+        <div class="form-grid">
+          <div>
+            <label class="form-label" for="codigo">Código</label>
+            <input id="codigo" class="form-input" type="text" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="nome">Nome</label>
+            <input id="nome" class="form-input" type="text" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="tipo_conta">Tipo da Conta</label>
+            <select id="tipo_conta" class="form-select" required>
+              <option value="">Selecione</option>
+              <option value="ATIVO">ATIVO</option>
+              <option value="PASSIVO">PASSIVO</option>
+              <option value="PL">PL</option>
+              <option value="RECEITA">RECEITA</option>
+              <option value="DESPESA">DESPESA</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="natureza">Natureza</label>
+            <select id="natureza" class="form-select" required>
+              <option value="">Selecione</option>
+              <option value="DEVEDORA">DEVEDORA</option>
+              <option value="CREDORA">CREDORA</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="conta_pai_id">Conta Pai</label>
+            <select id="conta_pai_id" class="form-select">
+              <option value="">Sem conta pai</option>
+            </select>
+          </div>
+
+          <div class="checkbox-group">
+            <input id="aceita_lancamento" type="checkbox" checked>
+            <label for="aceita_lancamento">Aceita lançamento</label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="submit-button" type="submit" class="btn-primary">Salvar</button>
+          <button id="cancel-edit-button" type="button" class="btn-secondary" style="display:none;">Cancelar edição</button>
+        </div>
+
+        <p id="form-status"></p>
+      </form>
+    </div>
+
+    <div class="card">
+      <p id="plano-contas-status"></p>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>Natureza</th>
+              <th>Conta Pai</th>
+              <th>Lançável</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="plano-contas-tbody">
+            <tr>
+              <td colspan="8">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/plano_contas.js"></script>
+</body>
+</html>
