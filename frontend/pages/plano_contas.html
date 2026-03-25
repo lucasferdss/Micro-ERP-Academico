@@ -1,120 +1,238 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plano de Contas - Micro ERP</title>
-  <link rel="stylesheet" href="/styles/global.css">
-  <link rel="stylesheet" href="/styles/plano_contas.css">
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/plano_contas.css" />
 </head>
 <body>
-  <header>
-    <div class="brand">Micro ERP</div>
-    <div class="user-area">
-      <a href="/pages/dashboard">Dashboard</a>
-      <a href="/logout">Sair</a>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-badge">ME</div>
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Gestão do Plano de Contas</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
     </div>
   </header>
 
-  <main>
-    <div class="card">
-      <div class="page-header">
-        <div>
-          <h1>Plano de Contas</h1>
-          <p>Cadastro, edição e status.</p>
-        </div>
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Estrutura Contábil</span>
+        <h1>Plano de Contas</h1>
+        <p>
+          Organize a estrutura contábil do sistema com uma experiência mais
+          moderna, clara e profissional. Cadastre contas, defina natureza,
+          hierarquia e status em um painel mais elegante e funcional.
+        </p>
+      </div>
 
-        <div>
-          <a href="/pages/dashboard" class="btn-secondary">Voltar</a>
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Módulo</span>
+          <strong>Plano de Contas</strong>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">Controle</span>
+          <strong>Tipo, natureza e hierarquia</strong>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Formulário de Conta</h2>
-      <form id="plano-conta-form">
-        <div class="form-grid">
+    <section class="content-grid">
+      <div class="panel panel-form">
+        <div class="panel-header panel-header-with-action">
           <div>
-            <label class="form-label" for="codigo">Código</label>
-            <input id="codigo" class="form-input" type="text" required>
+            <span class="section-tag">Formulário</span>
+            <h2>Cadastro de Conta</h2>
+            <p>Preencha os dados para cadastrar ou editar uma conta contábil.</p>
           </div>
 
-          <div>
-            <label class="form-label" for="nome">Nome</label>
-            <input id="nome" class="form-input" type="text" required>
-          </div>
-
-          <div>
-            <label class="form-label" for="tipo_conta">Tipo da Conta</label>
-            <select id="tipo_conta" class="form-select" required>
-              <option value="">Selecione</option>
-              <option value="ATIVO">ATIVO</option>
-              <option value="PASSIVO">PASSIVO</option>
-              <option value="PL">PL</option>
-              <option value="RECEITA">RECEITA</option>
-              <option value="DESPESA">DESPESA</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="form-label" for="natureza">Natureza</label>
-            <select id="natureza" class="form-select" required>
-              <option value="">Selecione</option>
-              <option value="DEVEDORA">DEVEDORA</option>
-              <option value="CREDORA">CREDORA</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="form-label" for="conta_pai_id">Conta Pai</label>
-            <select id="conta_pai_id" class="form-select">
-              <option value="">Sem conta pai</option>
-            </select>
-          </div>
-
-          <div class="checkbox-group">
-            <input id="aceita_lancamento" type="checkbox" checked>
-            <label for="aceita_lancamento">Aceita lançamento</label>
-          </div>
+          <button id="new-account-button" type="button" class="btn-secondary btn-new">
+            + Nova conta
+          </button>
         </div>
 
-        <div class="form-actions">
-          <button id="submit-button" type="submit" class="btn-primary">Salvar</button>
-          <button id="cancel-edit-button" type="button" class="btn-secondary" style="display:none;">Cancelar edição</button>
+        <div id="account-form-panel" class="account-form-panel hidden">
+          <form id="plano-conta-form">
+            <div class="form-grid">
+              <div class="field">
+                <label class="form-label" for="codigo">Código</label>
+                <input id="codigo" class="form-input" type="text" required />
+              </div>
+
+              <div class="field field-span-2">
+                <label class="form-label" for="nome">Nome</label>
+                <input id="nome" class="form-input" type="text" required />
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="tipo_conta">Tipo da Conta</label>
+                <select id="tipo_conta" class="form-select" required>
+                  <option value="">Selecione</option>
+                  <option value="ATIVO">ATIVO</option>
+                  <option value="PASSIVO">PASSIVO</option>
+                  <option value="PL">PL</option>
+                  <option value="RECEITA">RECEITA</option>
+                  <option value="DESPESA">DESPESA</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="natureza">Natureza</label>
+                <select id="natureza" class="form-select" required>
+                  <option value="">Selecione</option>
+                  <option value="DEVEDORA">DEVEDORA</option>
+                  <option value="CREDORA">CREDORA</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="conta_pai_id">Conta Pai</label>
+                <select id="conta_pai_id" class="form-select">
+                  <option value="">Sem conta pai</option>
+                </select>
+              </div>
+
+              <div class="field checkbox-field field-span-3">
+                <label class="checkbox-card">
+                  <input id="aceita_lancamento" type="checkbox" checked />
+                  <span class="checkbox-custom"></span>
+                  <span class="checkbox-text">
+                    <strong>Aceita lançamento</strong>
+                    <small>Marque se esta conta pode receber lançamentos diretamente.</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="submit-button" type="submit" class="btn-primary">
+                Salvar conta
+              </button>
+              <button id="cancel-edit-button" type="button" class="btn-secondary">
+                Fechar formulário
+              </button>
+            </div>
+
+            <p id="form-status" class="status-text"></p>
+          </form>
         </div>
-
-        <p id="form-status"></p>
-      </form>
-    </div>
-
-    <div class="card">
-      <p id="plano-contas-status"></p>
-
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Nome</th>
-              <th>Tipo</th>
-              <th>Natureza</th>
-              <th>Conta Pai</th>
-              <th>Lançável</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="plano-contas-tbody">
-            <tr>
-              <td colspan="8">Carregando...</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
-    </div>
+
+      <div class="panel panel-table">
+        <div class="panel-header">
+          <div>
+            <span class="section-tag">Listagem</span>
+            <h2>Contas cadastradas</h2>
+            <p>Visualize e gerencie a estrutura do plano de contas do sistema.</p>
+          </div>
+        </div>
+
+        <p id="plano-contas-status" class="status-text"></p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Natureza</th>
+                <th>Conta Pai</th>
+                <th>Lançável</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="plano-contas-tbody">
+              <tr>
+                <td colspan="8">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="/scripts/api.js"></script>
   <script src="/scripts/plano_contas.js"></script>
+  <script>
+    const newAccountButton = document.getElementById("new-account-button");
+    const accountFormPanel = document.getElementById("account-form-panel");
+    const planoContaForm = document.getElementById("plano-conta-form");
+    const cancelEditButton = document.getElementById("cancel-edit-button");
+    const submitButton = document.getElementById("submit-button");
+    const formStatus = document.getElementById("form-status");
+    const aceitaLancamento = document.getElementById("aceita_lancamento");
+
+    function openAccountForm(isEdit = false) {
+      if (!accountFormPanel) return;
+
+      accountFormPanel.classList.remove("hidden");
+
+      if (!isEdit && planoContaForm) {
+        planoContaForm.reset();
+        if (aceitaLancamento) aceitaLancamento.checked = true;
+      }
+
+      if (submitButton && !isEdit) {
+        submitButton.textContent = "Salvar conta";
+      }
+
+      if (formStatus && !isEdit) {
+        formStatus.textContent = "Formulário pronto para um novo cadastro.";
+      }
+
+      const firstField = document.getElementById("codigo");
+      if (firstField) firstField.focus();
+    }
+
+    function closeAccountForm() {
+      if (!accountFormPanel) return;
+
+      accountFormPanel.classList.add("hidden");
+
+      if (planoContaForm) {
+        planoContaForm.reset();
+      }
+
+      if (aceitaLancamento) {
+        aceitaLancamento.checked = true;
+      }
+
+      if (submitButton) {
+        submitButton.textContent = "Salvar conta";
+      }
+
+      if (formStatus) {
+        formStatus.textContent = "";
+      }
+    }
+
+    if (newAccountButton) {
+      newAccountButton.addEventListener("click", () => {
+        openAccountForm(false);
+      });
+    }
+
+    if (cancelEditButton) {
+      cancelEditButton.addEventListener("click", () => {
+        closeAccountForm();
+      });
+    }
+
+    window.openAccountForm = openAccountForm;
+    window.closeAccountForm = closeAccountForm;
+  </script>
 </body>
 </html>

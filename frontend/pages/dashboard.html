@@ -1,59 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Micro ERP</title>
-  <link rel="stylesheet" href="/styles/global.css">
-  <link rel="stylesheet" href="/styles/dashboard.css">
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/dashboard.css" />
 </head>
 <body>
-  <header>
-    <div class="brand">Micro ERP</div>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-badge">ME</div>
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Painel de Gestão</span>
+      </div>
+    </div>
+
     <div class="user-area">
-      <span id="user-name">...</span> (<span id="user-role">...</span>)
-      <a href="#" id="logout-link">Sair</a>
+      <div class="user-info">
+        <span class="user-label">Usuário</span>
+        <span class="user-name" id="user-name">...</span>
+        <span class="user-role">
+          Perfil: <strong id="user-role">...</strong>
+        </span>
+      </div>
+      <a href="#" id="logout-link" class="logout-btn">Sair</a>
     </div>
   </header>
 
-  <main>
-    <div class="dashboard-card">
-      <h1>Bem-vindo, <span id="user-name-inline">usuário</span>!</h1>
-      <p>Seu perfil é <strong><span id="user-role-inline">-</span></strong>.</p>
-      <p>Esse será o painel inicial do sistema.</p>
-      <p id="dashboard-status"></p>
-    </div>
+  <main class="dashboard-container">
+    <section class="hero-card">
+      <div class="hero-content">
+        <span class="hero-badge">Visão Geral</span>
+        <h1>
+          Bem-vindo, <span id="user-name-inline">usuário</span>!
+        </h1>
+        <p class="hero-description">
+          Seu perfil atual é
+          <strong><span id="user-role-inline">-</span></strong>.
+          A partir deste painel você pode acessar as principais áreas do sistema
+          de forma rápida e organizada.
+        </p>
+        <p id="dashboard-status" class="dashboard-status"></p>
+      </div>
+    </section>
 
-    <div class="dashboard-menu">
-      <a class="dashboard-menu-item" href="/pages/entidades">
-        <h3>Entidades</h3>
-        <p>Cadastro de clientes e fornecedores.</p>
-      </a>
+    <section class="menu-section">
+      <div class="section-header">
+        <h2>Módulos do sistema</h2>
+        <p>Selecione uma área para começar.</p>
+      </div>
 
-      <a class="dashboard-menu-item" href="/pages/produtos">
-        <h3>Produtos</h3>
-        <p>Cadastro de produtos, preços e estoque.</p>
-      </a>
+      <div class="dashboard-menu">
+        <a class="dashboard-menu-item" href="/pages/entidades">
+          <div class="menu-icon">👥</div>
+          <div class="menu-text">
+            <h3>Entidades</h3>
+            <p>Cadastro e gerenciamento de clientes e fornecedores.</p>
+          </div>
+        </a>
 
-      <a class="dashboard-menu-item" href="/pages/plano-contas">
-        <h3>Plano de Contas</h3>
-        <p>Estrutura contábil do sistema.</p>
-      </a>
-    </div>
+        <a class="dashboard-menu-item" href="/pages/produtos">
+          <div class="menu-icon">📦</div>
+          <div class="menu-text">
+            <h3>Produtos</h3>
+            <p>Controle de produtos, preços, estoque e informações gerais.</p>
+          </div>
+        </a>
+
+        <a class="dashboard-menu-item" href="/pages/plano-contas">
+          <div class="menu-icon">📊</div>
+          <div class="menu-text">
+            <h3>Plano de Contas</h3>
+            <p>Organização da estrutura contábil e classificação financeira.</p>
+          </div>
+        </a>
+      </div>
+    </section>
   </main>
 
-  <script src="/js/api.js"></script>
+  <script src="/scripts/api.js"></script>
   <script>
     const syncUserFields = () => {
-      const name = document.getElementById("user-name").textContent;
-      const role = document.getElementById("user-role").textContent;
-      document.getElementById("user-name-inline").textContent = name;
-      document.getElementById("user-role-inline").textContent = role;
+      const nameElement = document.getElementById("user-name");
+      const roleElement = document.getElementById("user-role");
+      const inlineName = document.getElementById("user-name-inline");
+      const inlineRole = document.getElementById("user-role-inline");
+
+      const name = nameElement?.textContent?.trim() || "usuário";
+      const role = roleElement?.textContent?.trim() || "-";
+
+      inlineName.textContent = name;
+      inlineRole.textContent = role;
     };
 
-    const observer = new MutationObserver(syncUserFields);
-    observer.observe(document.getElementById("user-name"), { childList: true });
-    observer.observe(document.getElementById("user-role"), { childList: true });
+    const userNameNode = document.getElementById("user-name");
+    const userRoleNode = document.getElementById("user-role");
+
+    if (userNameNode && userRoleNode) {
+      const observer = new MutationObserver(syncUserFields);
+      observer.observe(userNameNode, { childList: true, subtree: true, characterData: true });
+      observer.observe(userRoleNode, { childList: true, subtree: true, characterData: true });
+    }
+
+    syncUserFields();
   </script>
   <script src="/scripts/dashboard_page.js"></script>
 </body>

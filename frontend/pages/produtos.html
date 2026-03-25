@@ -1,121 +1,250 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Produtos - Micro ERP</title>
-  <link rel="stylesheet" href="/styles/global.css">
-  <link rel="stylesheet" href="/styles/produtos.css">
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/produtos.css" />
 </head>
 <body>
-  <header>
-    <div class="brand">Micro ERP</div>
-    <div class="user-area">
-      <a href="/pages/dashboard">Dashboard</a>
-      <a href="/logout">Sair</a>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-badge">ME</div>
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Gestão de Produtos</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
     </div>
   </header>
 
-  <main>
-    <div class="card">
-      <div class="page-header">
-        <div>
-          <h1>Produtos</h1>
-          <p>Cadastro, edição e status.</p>
-        </div>
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Cadastro e Gestão</span>
+        <h1>Produtos</h1>
+        <p>
+          Gerencie seu catálogo com uma experiência mais visual e profissional.
+          Cadastre produtos, controle estoque, acompanhe preços e mantenha a
+          operação organizada em um único painel.
+        </p>
+      </div>
 
-        <div>
-          <a href="/pages/dashboard" class="btn-secondary">Voltar</a>
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Módulo</span>
+          <strong>Produtos</strong>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">Controle</span>
+          <strong>Preço, margem e estoque</strong>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2>Formulário de Produto</h2>
-      <form id="produto-form">
-        <div class="form-grid">
+    <section class="content-grid">
+      <div class="panel panel-form">
+        <div class="panel-header panel-header-with-action">
           <div>
-            <label class="form-label" for="sku">SKU</label>
-            <input id="sku" class="form-input" type="text" required>
+            <span class="section-tag">Formulário</span>
+            <h2>Cadastro de Produto</h2>
+            <p>Preencha os dados para cadastrar ou editar um produto.</p>
           </div>
 
-          <div>
-            <label class="form-label" for="nome">Nome</label>
-            <input id="nome" class="form-input" type="text" required>
-          </div>
-
-          <div>
-            <label class="form-label" for="unidade_medida">Unidade de Medida</label>
-            <input id="unidade_medida" class="form-input" type="text" value="UN">
-          </div>
-
-          <div>
-            <label class="form-label" for="preco_custo">Preço de Custo</label>
-            <input id="preco_custo" class="form-input" type="text" value="0.00" required>
-          </div>
-
-          <div>
-            <label class="form-label" for="preco_venda">Preço de Venda</label>
-            <input id="preco_venda" class="form-input" type="text" value="0.00" required>
-          </div>
-
-          <div>
-            <label class="form-label" for="estoque_atual">Estoque Atual</label>
-            <input id="estoque_atual" class="form-input" type="text" value="0.000" required>
-          </div>
-
-          <div>
-            <label class="form-label" for="estoque_minimo">Estoque Mínimo</label>
-            <input id="estoque_minimo" class="form-input" type="text" value="0.000" required>
-          </div>
-
-          <div class="form-group-full">
-            <label class="form-label" for="descricao">Descrição</label>
-            <textarea id="descricao" class="form-textarea" rows="4"></textarea>
-          </div>
+          <button id="new-product-button" type="button" class="btn-secondary btn-new">
+            + Novo produto
+          </button>
         </div>
 
-        <div class="form-actions">
-          <button id="submit-button" type="submit" class="btn-primary">Salvar</button>
-          <button id="cancel-edit-button" type="button" class="btn-secondary" style="display:none;">Cancelar edição</button>
+        <div id="product-form-panel" class="product-form-panel hidden">
+          <form id="produto-form">
+            <div class="form-grid">
+              <div class="field">
+                <label class="form-label" for="sku">SKU</label>
+                <input id="sku" class="form-input" type="text" required />
+              </div>
+
+              <div class="field field-span-2">
+                <label class="form-label" for="nome">Nome</label>
+                <input id="nome" class="form-input" type="text" required />
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="unidade_medida">Unidade de Medida</label>
+                <input id="unidade_medida" class="form-input" type="text" value="UN" />
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="preco_custo">Preço de Custo</label>
+                <input id="preco_custo" class="form-input" type="text" value="0.00" required />
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="preco_venda">Preço de Venda</label>
+                <input id="preco_venda" class="form-input" type="text" value="0.00" required />
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="estoque_atual">Estoque Atual</label>
+                <input id="estoque_atual" class="form-input" type="text" value="0.000" required />
+              </div>
+
+              <div class="field">
+                <label class="form-label" for="estoque_minimo">Estoque Mínimo</label>
+                <input id="estoque_minimo" class="form-input" type="text" value="0.000" required />
+              </div>
+
+              <div class="field field-span-3">
+                <label class="form-label" for="descricao">Descrição</label>
+                <textarea id="descricao" class="form-textarea" rows="5"></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="submit-button" type="submit" class="btn-primary">
+                Salvar produto
+              </button>
+              <button id="cancel-edit-button" type="button" class="btn-secondary">
+                Fechar formulário
+              </button>
+            </div>
+
+            <p id="form-status" class="status-text"></p>
+          </form>
         </div>
-
-        <p id="form-status"></p>
-      </form>
-    </div>
-
-    <div class="card">
-      <h2>Lista de Produtos</h2>
-      <p id="produtos-status"></p>
-
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>SKU</th>
-              <th>Nome</th>
-              <th>Unidade</th>
-              <th>Preço Custo</th>
-              <th>Preço Venda</th>
-              <th>Margem</th>
-              <th>Estoque</th>
-              <th>Mínimo</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="produtos-tbody">
-            <tr>
-              <td colspan="11">Carregando...</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
-    </div>
+
+      <div class="panel panel-table">
+        <div class="panel-header">
+          <div>
+            <span class="section-tag">Listagem</span>
+            <h2>Lista de Produtos</h2>
+            <p>Visualize, gerencie e acompanhe os produtos cadastrados.</p>
+          </div>
+        </div>
+
+        <p id="produtos-status" class="status-text"></p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>SKU</th>
+                <th>Nome</th>
+                <th>Unidade</th>
+                <th>Preço Custo</th>
+                <th>Preço Venda</th>
+                <th>Margem</th>
+                <th>Estoque</th>
+                <th>Mínimo</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="produtos-tbody">
+              <tr>
+                <td colspan="11">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="/scripts/api.js"></script>
   <script src="/scripts/produtos.js"></script>
+  <script>
+    const newProductButton = document.getElementById("new-product-button");
+    const productFormPanel = document.getElementById("product-form-panel");
+    const produtoForm = document.getElementById("produto-form");
+    const cancelEditButton = document.getElementById("cancel-edit-button");
+    const submitButton = document.getElementById("submit-button");
+    const formStatus = document.getElementById("form-status");
+
+    function openProductForm(isEdit = false) {
+      if (!productFormPanel) return;
+
+      productFormPanel.classList.remove("hidden");
+
+      if (!isEdit && produtoForm) {
+        produtoForm.reset();
+
+        const unidade = document.getElementById("unidade_medida");
+        const precoCusto = document.getElementById("preco_custo");
+        const precoVenda = document.getElementById("preco_venda");
+        const estoqueAtual = document.getElementById("estoque_atual");
+        const estoqueMinimo = document.getElementById("estoque_minimo");
+
+        if (unidade) unidade.value = "UN";
+        if (precoCusto) precoCusto.value = "0.00";
+        if (precoVenda) precoVenda.value = "0.00";
+        if (estoqueAtual) estoqueAtual.value = "0.000";
+        if (estoqueMinimo) estoqueMinimo.value = "0.000";
+      }
+
+      if (submitButton && !isEdit) {
+        submitButton.textContent = "Salvar produto";
+      }
+
+      if (formStatus && !isEdit) {
+        formStatus.textContent = "Formulário pronto para um novo cadastro.";
+      }
+
+      const firstField = document.getElementById("sku");
+      if (firstField) firstField.focus();
+    }
+
+    function closeProductForm() {
+      if (!productFormPanel) return;
+
+      productFormPanel.classList.add("hidden");
+
+      if (produtoForm) {
+        produtoForm.reset();
+      }
+
+      const unidade = document.getElementById("unidade_medida");
+      const precoCusto = document.getElementById("preco_custo");
+      const precoVenda = document.getElementById("preco_venda");
+      const estoqueAtual = document.getElementById("estoque_atual");
+      const estoqueMinimo = document.getElementById("estoque_minimo");
+
+      if (unidade) unidade.value = "UN";
+      if (precoCusto) precoCusto.value = "0.00";
+      if (precoVenda) precoVenda.value = "0.00";
+      if (estoqueAtual) estoqueAtual.value = "0.000";
+      if (estoqueMinimo) estoqueMinimo.value = "0.000";
+
+      if (submitButton) {
+        submitButton.textContent = "Salvar produto";
+      }
+
+      if (formStatus) {
+        formStatus.textContent = "";
+      }
+    }
+
+    if (newProductButton) {
+      newProductButton.addEventListener("click", () => {
+        openProductForm(false);
+      });
+    }
+
+    if (cancelEditButton) {
+      cancelEditButton.addEventListener("click", () => {
+        closeProductForm();
+      });
+    }
+
+    window.openProductForm = openProductForm;
+    window.closeProductForm = closeProductForm;
+  </script>
 </body>
 </html>
