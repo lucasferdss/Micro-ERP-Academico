@@ -1,19 +1,8 @@
-/**
- * ARQUIVO: entidades.js
- * PAPEL: Controlador da tela de "Gestão de Entidades" (Clientes e Fornecedores).
- * FLUXO: Ele cuida de listar as entidades na tabela, abrir o formulário lateral, preencher dados para edição
- *        e enviar o comando de salvar/atualizar para a API do Python.
- */
-
 // Memória temporária da tela
 let entidadeEditandoId = null; // Guarda o ID da entidade se o usuário estiver editando. Se for nulo, é um cadastro novo.
 let entidadesCache = [];       // Guarda a lista de entidades para não precisarmos ir no banco toda hora que clicar em "Editar"
 
-/**
- * FUNÇÃO ÚTIL: getPayloadFormulario
- * PAPEL: Vai nos campos de texto (inputs do HTML) e "varre" tudo o que o usuário digitou.
- * SAÍDA: Um dicionário (JSON) pronto para ser enviado para o Backend.
- */
+// Lê os campos do formulário e monta o JSON para enviar ao backend.
 function getPayloadFormulario() {
   return {
     tipo_entidade: document.getElementById("tipo_entidade").value.trim(),
@@ -32,11 +21,7 @@ function getPayloadFormulario() {
   };
 }
 
-/**
- * FUNÇÃO ÚTIL: preencherFormulario
- * ENTRADA: Um objeto `entidade` com dados preenchidos.
- * PAPEL: Pega os dados que vieram do Banco e joga nos campinhos do HTML para o usuário poder editar.
- */
+// Preenche o formulário com os dados da entidade para edição.
 function preencherFormulario(entidade) {
   document.getElementById("tipo_entidade").value = entidade.tipo_entidade || "";
   document.getElementById("nome_razao_social").value = entidade.nome_razao_social || "";
@@ -53,10 +38,7 @@ function preencherFormulario(entidade) {
   document.getElementById("uf").value = entidade.uf || "";
 }
 
-/**
- * FUNÇÃO ÚTIL: limparFormulario
- * PAPEL: Reseta o formulário, limpa a variável de edição e fecha o painel lateral ocultando ele (adicionando a classe 'hidden').
- */
+// Limpa o formulário, reseta a edição e fecha o painel lateral.
 function limparFormulario() {
   document.getElementById("entidade-form").reset();
   entidadeEditandoId = null; // Garante que o sistema saiba que o próximo "Salvar" será um cadastro novo
@@ -68,26 +50,22 @@ function limparFormulario() {
   if (panel) panel.classList.add("hidden");
 }
 
-/**
- * FUNÇÃO PRINCIPAL: iniciarEdicao
- * QUEM CHAMA: O botão azul de "Editar" que fica no final de cada linha da tabela.
- * ENTRADA: O `id` do registro escolhido.
- */
+// Inicia a edição do registro pelo id.
 function iniciarEdicao(id) {
-  // Passo 1: Busca o registro na memória Cache (aquela lista que varremos na abertura da tela)
+  // Busca o registro na memória Cache (aquela lista que varremos na abertura da tela)
   const entidade = entidadesCache.find((item) => item.id === id);
   if (!entidade) return;
 
-  // Passo 2: Define o modo do sistema como "Modo Edição"
+  // Define o modo do sistema como "Modo Edição"
   entidadeEditandoId = id;
   
-  // Passo 3: Mostra o formulário escondido
+  // Mostra o formulário escondido
   openEntityForm(true);
   
-  // Passo 4: Joga os dados nos inputs
+  // Joga os dados nos inputs
   preencherFormulario(entidade);
   
-  // Passo 5: Atualiza a estética dos botões
+  // Atualiza a estética dos botões
   document.getElementById("submit-button").textContent = "Atualizar";
   document.getElementById("cancel-edit-button").style.display = "inline-block";
   document.getElementById("form-status").textContent = `Editando entidade #${id}`;
@@ -96,11 +74,7 @@ function iniciarEdicao(id) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/**
- * FUNÇÃO PRINCIPAL: alternarStatus
- * QUEM CHAMA: O botão secundário ("Ativar"/"Desativar") na listagem da tabela.
- * PAPEL: Altera apenas um campo booleano (True/False) no banco de dados.
- */
+// Alterna o status ativo/inativo do registro.
 async function alternarStatus(id) {
   const status = document.getElementById("entidades-status");
 
@@ -118,10 +92,7 @@ async function alternarStatus(id) {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: carregarEntidades (O MOTOR DA LISTAGEM)
- * PAPEL: Buscar no Python a lista completa de Clientes/Fornecedores e desenhar as Tags <tr> na tela (Tabela HTML).
- */
+// Carrega a lista de entidades e monta as linhas da tabela na tela.
 async function carregarEntidades() {
   const tbody = document.getElementById("entidades-tbody");
   const status = document.getElementById("entidades-status");
@@ -129,7 +100,7 @@ async function carregarEntidades() {
   try {
     status.textContent = "Carregando entidades...";
 
-    // Passo 1: Busca os dados na API Segura (O Python fará o SELECT no Supabase)
+    // Busca os dados na API Segura (O Python fará o SELECT no Supabase)
     const entidades = await API.get("/api/entidades");
     // Guarda a resposta no Cache Global da tela
     entidadesCache = Array.isArray(entidades) ? entidades : [];
@@ -141,7 +112,7 @@ async function carregarEntidades() {
       return;
     }
 
-    // Passo 2: "Renderização". Desenha as linhas <tr> dinamicamente usando Templates String (`...`)
+    // "Renderização". Desenha as linhas <tr> dinamicamente usando Templates String (`...`)
     tbody.innerHTML = entidadesCache.map((entidade) => `
       <tr>
         <td>${entidade.id}</td>
@@ -168,11 +139,7 @@ async function carregarEntidades() {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: salvarEntidade
- * QUEM CHAMA: O botão "Salvar" ou "Atualizar" de dentro do Formulário.
- * FLUXO: Lê os campos e decide se envia um POST (Novo Cadastro) ou um PUT (Atualização).
- */
+// Salva a entidade com POST ou PUT conforme o modo do formulário.
 async function salvarEntidade(event) {
   event.preventDefault(); // Impede f5 na página
 
@@ -202,10 +169,7 @@ async function salvarEntidade(event) {
   }
 }
 
-/** 
- * EVENTO DE INICIALIZAÇÃO
- * Tudo o que estiver aqui dentro liga no exato instante em que o HTML da página termina de desenhar na tela.
- */
+// Roda quando o HTML da página termina de carregar.
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("entidade-form");
   const cancelBtn = document.getElementById("cancel-edit-button");
@@ -223,9 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.iniciarEdicao = iniciarEdicao;
 window.alternarStatus = alternarStatus;
 
-// ==============================================
 // CONTROLE DE INTERFACE (UI) DO PAINEL LATERAL
-// ==============================================
 const newEntityButton = document.getElementById("new-entity-button");
 const entityFormPanel = document.getElementById("entity-form-panel");
 const entidadeForm = document.getElementById("entidade-form");
@@ -233,7 +195,7 @@ const cancelEditButton = document.getElementById("cancel-edit-button");
 const submitButton = document.getElementById("submit-button");
 const formStatus = document.getElementById("form-status");
 
-/** Abre (Expande) o Painel Oculto */
+// Abre (Expande) o Painel Oculto
 function openEntityForm(isEdit = false) {
   if (!entityFormPanel) return;
   
@@ -250,7 +212,7 @@ function openEntityForm(isEdit = false) {
   if (firstField) firstField.focus();
 }
 
-/** Esconde (Fecha) o Painel */
+// Esconde (Fecha) o Painel
 function closeEntityForm() {
   if (!entityFormPanel) return;
   entityFormPanel.classList.add("hidden");

@@ -1,17 +1,8 @@
-/**
- * ARQUIVO: plano_contas.js
- * PAPEL: Controlador da tela de "Plano de Contas" (Estrutura Financeira/Contábil).
- * FLUXO: Parecido com produtos e entidades, mas possui a lógica especial de "Conta Pai" (Hierarquia de Contas).
- */
-
 // Memória temporária da tela
 let contaEditandoId = null;
 let contasCache = [];
 
-/**
- * FUNÇÃO ÚTIL: getPayloadConta
- * PAPEL: Coleta e unifica os dados do formulário financeiro da tela e prepara o "envelope" de envio (JSON).
- */
+// Lê os dados do formulário e monta o JSON da conta.
 function getPayloadConta() {
   return {
     codigo: document.getElementById("codigo").value.trim(),
@@ -24,10 +15,7 @@ function getPayloadConta() {
   };
 }
 
-/**
- * FUNÇÃO ÚTIL: preencherFormulario
- * PAPEL: Transporte reverso. Traz do Banco para a tela visual para o usuário poder alterar um dado.
- */
+// Preenche o formulário com os dados para edição.
 function preencherFormulario(conta) {
   document.getElementById("codigo").value = conta.codigo || "";
   document.getElementById("nome").value = conta.nome || "";
@@ -38,10 +26,7 @@ function preencherFormulario(conta) {
   document.getElementById("aceita_lancamento").checked = !!conta.aceita_lancamento;
 }
 
-/**
- * FUNÇÃO ÚTIL: limparFormularioConta
- * PAPEL: Ao cancelar edição ou concluir um salvamento, limpa a sujeira do painel e oculta a gaveta.
- */
+// Limpa o formulário da conta e fecha o painel.
 function limparFormularioConta() {
   document.getElementById("plano-conta-form").reset();
   
@@ -55,11 +40,7 @@ function limparFormularioConta() {
   if (panel) panel.classList.add("hidden");
 }
 
-/**
- * FUNÇÃO ESPECIAL DE NEGÓCIO: atualizarSelectContaPai
- * PAPEL: Constrói dinamicamente as opções do "Select" (Dropdown) onde escolhemos de quem esta conta é "Filha".
- * REGRA EXCLUSIVA: Um registro não pode ser pai dele mesmo, então nós usamos o `.filter` para remover a si mesmo da lista.
- */
+// Atualiza as opções do select de conta pai, excluindo a própria conta da lista.
 function atualizarSelectContaPai() {
   const select = document.getElementById("conta_pai_id");
   if (!select) return;
@@ -81,34 +62,28 @@ function atualizarSelectContaPai() {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: iniciarEdicaoConta
- * QUEM CHAMA: O clique no botão "Editar".
- */
+// Inicia a edição da conta selecionada.
 function iniciarEdicaoConta(id) {
-  // Passo 1: Caça a conta na lista já carregada da memória
+  // Caça a conta na lista já carregada da memória
   const conta = contasCache.find((item) => item.id === id);
   if (!conta) return;
 
-  // Passo 2: Seta a edição
+  // Seta a edição
   contaEditandoId = id;
   
-  // Passo 3: Expande gaveta, atualiza as opções do Pai e então preenche com os dados velhos
+  // Expande gaveta, atualiza as opções do Pai e então preenche com os dados velhos
   openAccountForm(true);
   atualizarSelectContaPai();
   preencherFormulario(conta);
   
-  // Passo 4: Feedback visual (botão Atualizar em vez de Salvar)
+  // Feedback visual (botão Atualizar em vez de Salvar)
   document.getElementById("submit-button").textContent = "Atualizar";
   document.getElementById("cancel-edit-button").style.display = "inline-block";
   document.getElementById("form-status").textContent = `Editando conta #${id}`;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/**
- * FUNÇÃO PRINCIPAL: alternarStatusConta
- * PAPEL: Trocar apenas a propriedade Booleana (Ativo/Inativo) no Supabase.
- */
+// Alterna o status ativo da conta.
 async function alternarStatusConta(id) {
   const status = document.getElementById("plano-contas-status");
 
@@ -125,10 +100,7 @@ async function alternarStatusConta(id) {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: carregarPlanoContas (O EXIBIDOR DA LISTA MESTRA)
- * FLUXO: Faz GET no backend, organiza o cache global e depois "injeta" as <tr> preenchidas na <tbody> do HTML.
- */
+// Carrega o plano de contas e atualiza a tabela na tela.
 async function carregarPlanoContas() {
   const tbody = document.getElementById("plano-contas-tbody");
   const status = document.getElementById("plano-contas-status");
@@ -176,10 +148,7 @@ async function carregarPlanoContas() {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: salvarPlanoConta
- * QUEM CHAMA: Disparada pelo HTML Formulário nativo quando clica no Input "Submit".
- */
+// Salva a conta do plano pelo formulário.
 async function salvarPlanoConta(event) {
   event.preventDefault(); // Breca o navegador de dar um Reload bruto na página
 
@@ -221,9 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.iniciarEdicaoConta = iniciarEdicaoConta;
 window.alternarStatusConta = alternarStatusConta;
 
-// ==============================================
-// LÓGICA DE GAVETA DO FORMULÁRIO (Abrir/Fechar)
-// ==============================================
+// Controle de abertura e fechamento do formulário.
 const newAccountButton = document.getElementById("new-account-button");
 const accountFormPanel = document.getElementById("account-form-panel");
 const planoContaForm = document.getElementById("plano-conta-form");

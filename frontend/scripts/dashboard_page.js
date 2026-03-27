@@ -1,12 +1,5 @@
-/**
- * ARQUIVO: dashboard_page.js
- * PAPEL: Controlador da tela inicial do Painel de Bordo (Dashboard).
- * FLUXO: Executa sempre que o usuário entra no Dashboard, confirmando se ele tem permissão (já logou)
- *        e então puxando os dados de identificação para exibir na tela.
- */
-
 async function carregarDashboard() {
-  // Passo 1: Captura as "bóias" (elementos do HTML onde vamos injetar texto)
+  // Captura as "bóias" (elementos do HTML onde vamos injetar texto)
   const nomeEl = document.getElementById("user-name");
   const perfilEl = document.getElementById("user-role");
   const statusEl = document.getElementById("dashboard-status");
@@ -14,7 +7,7 @@ async function carregarDashboard() {
   try {
     statusEl.textContent = "Carregando perfil...";
 
-    // Passo 2: Pede pro Python (rota /api/me) confirmar as credenciais
+    // Pede pro Python (rota /api/me) confirmar as credenciais
     const resposta = await API.get("/api/me");
 
     // Validação de Segurança (Guardião da Rota)
@@ -24,7 +17,7 @@ async function carregarDashboard() {
       return;
     }
 
-    // Passo 3: Preenche o HTML visual com os dados que o Banco de Dados retornou
+    // Preenche o HTML visual com os dados que o Banco de Dados retornou
     nomeEl.textContent = resposta.user.email || resposta.user.nome || "-";
     perfilEl.textContent = resposta.user.perfil || "Admin"; // Regra de negócio: Assume 'Admin' temporariamente
     statusEl.textContent = "";
@@ -38,12 +31,12 @@ async function fazerLogout(event) {
   event.preventDefault();
 
   try {
-    // Passo 1: Avisa pro Backend apagar o cookie que mantinha a sessão viva
+    // Avisa pro Backend apagar o cookie que mantinha a sessão viva
     await API.post("/api/logout", {});
   } catch (error) {
     console.error(error);
   } finally {
-    // Passo 2: Independente de travar ou não, sempre volta pra página de Login para limpar o estado visual
+    // Independente de travar ou não, sempre volta pra página de Login para limpar o estado visual
     window.location.href = "/pages/login";
   }
 }
@@ -58,13 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarDashboard(); // Inicializa carregamento
 });
 
-/**
- * BLOCO ADICIONAL: "Sincronizador Visual" (Observer)
- * Regra de Negócio/UI: Às vezes o nome do usuário aparece em vários lugares da tela (ex: barra principal e menu do celular).
- * Esse código vigia (MutationObserver) o elemento principal 'user-name'.
- * Toda vez que o Javascript de cima troca o nome principal, esse bloco copia o mesmo nome automaticamente
- * pros demais locais da tela que usam '-inline', economizando código.
- */
+
+// Sincroniza o nome do usuário em outros pontos da tela sempre que o elemento principal 'user-name' for alterado.
 const syncUserFields = () => {
   const nameElement = document.getElementById("user-name");
   const roleElement = document.getElementById("user-role");

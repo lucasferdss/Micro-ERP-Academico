@@ -1,11 +1,3 @@
-"""
-ARQUIVO: server.py
-PAPEL: Coração do Backend (Roteador e Controlador).
-FLUXO: Este arquivo sobe um servidor HTTP nativo. Ele escuta as requisições que vêm do navegador (Frontend),
-processa as regras de negócio, consulta o Supabase (Banco de Dados) e devolve a resposta.
-COMO SE ENCAIXA: É a ponte central de comunicação entre a Interface do Usuário (HTML/JS) e o Banco de Dados.
-"""
-
 import json
 import logging
 import mimetypes
@@ -13,10 +5,10 @@ import os
 import urllib.parse
 import threading
 import webbrowser
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from decimal import InvalidOperation, Decimal
-
 from app.config import supabase
 
 # Configuração de Registros (Logs)
@@ -29,13 +21,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 
 def parse_decimal(value: str, default: str = "0") -> float:
-    """
-    FUNÇÃO: parse_decimal
-    ENTRADA: Uma string representando dinheiro (ex: "1.200,50")
-    PROCESSAMENTO: Remove pontos de milhar, troca vírgula por ponto para o formato americano e converte para decimal.
-    SAÍDA: Um número float (ex: 1200.50). Se falhar, retorna o valor padrão.
-    MOTIVO DA REGRA: O frontend envia números formatados para o padrão brasileiro, mas o banco de dados só aceita padrão americano.
-    """
+    # Converte valor monetário em texto para float.
+    # Aceita formato brasileiro e retorna o padrão numérico.
     raw = (value or "").strip().replace(".", "").replace(",", ".")
     if not raw:
         raw = default
@@ -45,17 +32,12 @@ def parse_decimal(value: str, default: str = "0") -> float:
         return float(default)
 
 class BackendHandler(BaseHTTPRequestHandler):
-    """
-    CLASSE PRINCIPAL: BackendHandler
-    PAPEL: Intercepta e decide o que fazer com CADA requisição HTTP (GET, POST, PUT, PATCH) que chega no servidor.
-    É ela quem dita se o usuário está pedindo uma página HTML ou se está fazendo uma consulta no Banco de Dados via API.
-    """
-
+    # Classe que processa as requisições HTTP do servidor.
+    # Define se a resposta será uma página HTML ou uma ação da API.
+    
     def send_json(self, data, status=200, headers=None):
-        """
-        FUNÇÃO UTILITÁRIA: Devolve respostas no formato JSON para o Frontend.
-        QUEM CHAMA: Os métodos do_GET, do_POST, etc., quando precisam retornar dados ou sucesso.
-        """
+        # Envia respostas em JSON para o frontend.
+        # Usada pelos métodos de requisição do servidor.
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         if headers:
@@ -65,17 +47,11 @@ class BackendHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(data).encode('utf-8'))
 
     def send_error_json(self, message, status=400):
-        """
-        FUNÇÃO UTILITÁRIA: Devolve uma mensagem de erro formatada para o Frontend exibir no alerta vermelho.
-        """
+        # Devolve uma mensagem de erro formatada para o Frontend exibir no alerta vermelho.
         self.send_json({"error": message}, status)
 
     def serve_static(self, url_path):
-        """
-        FUNÇÃO: serve_static
-        PAPEL: Ler os arquivos físicos (.html, .css, .js) da pasta frontend e enviá-los para o navegador.
-        REGRA: Fazemos um "De/Para" isolando as URLs limpas (ex: `/dashboard`) para o arquivo físico real (`dashboard.html`).
-        """
+        # Lê arquivos estáticos do frontend e envia para o navegador.
         if url_path == "/pages/login":
             file_path = FRONTEND_DIR / "pages" / "login.html"
         elif url_path == "/pages/dashboard":
@@ -110,11 +86,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             self.wfile.write(f.read())
 
     def get_token_from_cookie(self):
-        """
-        FUNÇÃO: get_token_from_cookie
-        PAPEL: Capturar do cabeçalho da requisição o Cookie de sessão (`sb_access_token`) que nós guardamos ao fazer Login.
-        SAÍDA: A string do Token JWT gerado pelo Supabase.
-        """
+        # Obtém do cookie o token de acesso da sessão.
         cookies = self.headers.get('Cookie')
         if not cookies:
             return None
@@ -125,16 +97,13 @@ class BackendHandler(BaseHTTPRequestHandler):
         return None
 
     def require_auth(self):
-        """
-        FUNÇÃO DE MIDDLEWARE: Retorna o Usuário se ele estiver logado, ou bloqueia a requisição (Erro 401 Unauthorized).
-        QUEM CHAMA: As rotas da API (dados de produtos, entidades) que não podem ser abertas ao público.
-        """
+        # Valida a sessão do usuário e bloqueia acesso não autorizado.
         token = self.get_token_from_cookie()
         if not token:
             self.send_error_json("Unauthorized", 401)
             return None
         try:
-            # Passo 1: Vai até o Auth do Supabase e valida matematicamente se o cookie é real e não expirou
+            # Vai até o Auth do Supabase e valida matematicamente se o cookie é real e não expirou
             user = supabase.auth.get_user(token)
             if not user:
                 self.send_error_json("Unauthorized", 401)
@@ -146,15 +115,11 @@ class BackendHandler(BaseHTTPRequestHandler):
             return None
             
     def do_GET(self):
-        """
-        MÉTODO: GET (Leitura)
-        QUEM CHAMA: O navegador do usuário (quando digita uma URL) ou o Javascript (quando pede para listar dados).
-        O QUE FAZ: Entrega telas (HTML/CSS) ou devolve informações de tabelas (API).
-        """
+        # Processa requisições GET para páginas e dados da API.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
 
-        # Passo 1: Redirecionamentos básicos de navegação
+        # Redirecionamentos básicos de navegação
         if path == "/":
             self.send_response(302)
             self.send_header('Location', '/pages/login')
@@ -176,7 +141,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             self.end_headers()
             return
 
-        # Passo 2: Roteador de Decisão. (É arquivo estático ou é dado da API?)
+        # Roteador de Decisão. (É arquivo estático ou é dado da API?)
         if not path.startswith("/api/"):
             # Se não começa com /api/, significa que ele quer baixar tela, estilo ou script.
             return self.serve_static(path)
@@ -198,7 +163,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                 self.send_json({"authenticated": False}, 401)
             return
 
-        # Passo 3: Segurança Ativa - TUDO DAQUI PARA BAIXO EXIGE ESTAR LOGADO
+        # Segurança Ativa - TUDO DAQUI PARA BAIXO EXIGE ESTAR LOGADO
         user = self.require_auth()
         if not user:
             return
@@ -225,11 +190,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             self.send_error_json(str(e), 500)
 
     def do_POST(self):
-        """
-        MÉTODO: POST (Criação de Dados)
-        QUEM CHAMA: Formulários do frontend (via api.js).
-        O QUE FAZ: Cadastra recursos novos no Banco de Dados (Produtos, Contas, Login, etc).
-        """
+        # Processa requisições POST para criar novos dados.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
 
@@ -272,7 +233,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            # Passo 1: Recebeu dados de novo Produto
+            # Recebeu dados de novo Produto
             if path == "/api/produtos":
                 sku = data.get("sku", "").strip()
                 nome = data.get("nome", "").strip()
@@ -375,11 +336,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                 self.send_error_json("Ocorreu um erro interno no servidor.", 500)
 
     def do_PUT(self):
-        """
-        MÉTODO: PUT (Atualização)
-        QUEM CHAMA: Formulários quando estão no modo Editar/Atualizar.
-        O QUE FAZ: Pega os dados mais recentes do Frontend e sobrescreve (UPDATE) lá no Supabase no ID especificado.
-        """
+        # Processa requisições PUT para atualizar dados existentes.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
         
@@ -395,7 +352,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             data = {}
 
         try:
-            # Passo 1: Captura na ROTA o ID final (ex: /api/produtos/2)
+            # Captura na ROTA o ID final (ex: /api/produtos/2)
             if path.startswith("/api/produtos/"):
                 pid = path.split("/")[-1] # Transforma numa lista e pega o último valor do link (no caso, 2)
                 
@@ -414,7 +371,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "estoque_atual": parse_decimal(str(data.get("estoque_atual", "0"))),
                     "estoque_minimo": parse_decimal(str(data.get("estoque_minimo", "0")))
                 }
-                # Passo 2: Executa o Update limitando usando a regra `.eq('id', pid)`, para não atualizar o banco todo rs!
+                # Executa o Update limitando usando a regra `.eq('id', pid)`, para não atualizar o banco todo rs!
                 res = supabase.table('produtos').update(payload).eq('id', pid).execute()
                 self.send_json(res.data[0] if res.data else {})
 
@@ -462,12 +419,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                 self.send_error_json("Erro interno no servidor de edição.", 500)
 
     def do_PATCH(self):
-        """
-        MÉTODO: PATCH (Atualização Parcial)
-        QUEM CHAMA: Botões rápidos nas Listagens (ex: O botão de "Ativar/Desativar").
-        O QUE FAZ: Ao invés de mandar todos os dados do formulário de novo como no PUT, o PATCH apenas investe
-        um valor isolado no banco de dados. "Fazer um Toggle".
-        """
+        # Processa requisições PATCH para alterar campos específicos.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
         
@@ -514,10 +466,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             self.send_error_json(str(e), 500)
 
 def run_server(port=8080):
-    """
-    FUNÇÃO FINAL: O Botão Ligador da Usina!
-    PAPEL: Dá as ordens à rede da máquina local, abrindo as portas e escutando para todo sempre (serve_forever).
-    """
+    # Inicia o servidor e o mantém em execução.
     server_address = ('', port)
     httpd = HTTPServer(server_address, BackendHandler)
     

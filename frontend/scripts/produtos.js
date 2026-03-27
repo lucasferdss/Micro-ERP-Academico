@@ -1,19 +1,9 @@
-/**
- * ARQUIVO: produtos.js
- * PAPEL: Controlador da tela de "Gestão de Produtos" (Catálogo e Estoque).
- * FLUXO: Lista os produtos na tabela, controla a abertura e fechamento do formulário de cadastro,
- *        higieniza os valores (como o SKU) e envia comandos de salvar/atualizar para a API (Python).
- */
 
 // Memória temporária da tela
 let produtoEditandoId = null; // Guarda qual produto estamos editando no momento
 let produtosCache = [];       // Cache de produtos para não recarregar do banco a cada clique
 
-/**
- * FUNÇÃO ÚTIL: getPayloadProduto
- * PAPEL: Ler o formulário HTML e montar o pacote de dados (Payload) para o Backend.
- * SAÍDA: Objeto JSON higienizado.
- */
+// Lê o formulário e monta o JSON do produto.
 function getPayloadProduto() {
   return {
     sku: document.getElementById("sku").value.trim(),
@@ -27,10 +17,7 @@ function getPayloadProduto() {
   };
 }
 
-/**
- * FUNÇÃO ÚTIL: preencherFormulario
- * PAPEL: Transporta os valores vindos do Banco de Dados para dentro das caixinhas visuais do HTML.
- */
+// Preenche o formulário com os dados do produto para edição.
 function preencherFormulario(produto) {
   document.getElementById("sku").value = produto.sku || "";
   document.getElementById("nome").value = produto.nome || "";
@@ -44,10 +31,7 @@ function preencherFormulario(produto) {
   document.getElementById("estoque_minimo").value = produto.estoque_minimo ?? "0.000";
 }
 
-/**
- * FUNÇÃO ÚTIL: limparFormulario
- * PAPEL: Zera os campos, retira a variável global de edição e recolhe o painel visual do formulário.
- */
+// Limpa o formulário e fecha o painel.
 function limparFormulario() {
   document.getElementById("produto-form").reset();
   
@@ -67,23 +51,20 @@ function limparFormulario() {
   if (panel) panel.classList.add("hidden");
 }
 
-/**
- * FUNÇÃO PRINCIPAL: iniciarEdicaoProduto
- * QUEM CHAMA: O clique no botão "Editar" de uma linha na tabela.
- */
+// Inicia a edição do produto selecionado.
 function iniciarEdicaoProduto(id) {
-  // Passo 1: Caça o produto no Cache local pelo ID
+  // Caça o produto no Cache local pelo ID
   const produto = produtosCache.find((item) => item.id === id);
   if (!produto) return;
 
-  // Passo 2: Define estado de Edição
+  // Define estado de Edição
   produtoEditandoId = id;
   
-  // Passo 3: Força a abertura visual da gaveta do Formulário e joga os dados nela
+  // Força a abertura visual da gaveta do Formulário e joga os dados nela
   openProductForm(true);
   preencherFormulario(produto);
   
-  // Passo 4: Atualiza a estética do Painel indicando que estamos "Atualizando" em vez de Salvar
+  // Atualiza a estética do Painel indicando que estamos "Atualizando" em vez de Salvar
   document.getElementById("submit-button").textContent = "Atualizar";
   document.getElementById("cancel-edit-button").style.display = "inline-block";
   document.getElementById("form-status").textContent = `Editando produto #${id}`;
@@ -91,10 +72,7 @@ function iniciarEdicaoProduto(id) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/**
- * FUNÇÃO PRINCIPAL: alternarStatusProduto
- * PAPEL: Alternar um Produto entre Ativo e Inativo, sem afetar mais nada.
- */
+// Alterna o status ativo do produto.
 async function alternarStatusProduto(id) {
   const status = document.getElementById("produtos-status");
 
@@ -112,11 +90,7 @@ async function alternarStatusProduto(id) {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: carregarProdutos (O ALIMENTADOR DA LISTAGEM)
- * FLUXO: Bate na porta da API Python (`/api/produtos`), baixa a lista de JSONs que o banco gerou, 
- *        e então pinta a tabela dinamicamente <tr>.
- */
+// Carrega os produtos e atualiza a tabela na tela.
 async function carregarProdutos() {
   const tbody = document.getElementById("produtos-tbody");
   const status = document.getElementById("produtos-status");
@@ -124,7 +98,7 @@ async function carregarProdutos() {
   try {
     status.textContent = "Carregando produtos...";
 
-    // Passo 1: Manda o navegador baixar os dados
+    // Manda o navegador baixar os dados
     const produtos = await API.get("/api/produtos");
     produtosCache = Array.isArray(produtos) ? produtos : [];
 
@@ -135,7 +109,7 @@ async function carregarProdutos() {
       return;
     }
 
-    // Passo 2: Loop transformando dados estruturais (JSON) em Linhas de Tabela (HTML)
+    // Loop transformando dados estruturais (JSON) em Linhas de Tabela (HTML)
     tbody.innerHTML = produtosCache.map((produto) => `
       <tr>
         <td>${produto.id}</td>
@@ -165,11 +139,7 @@ async function carregarProdutos() {
   }
 }
 
-/**
- * FUNÇÃO PRINCIPAL: salvarProduto
- * QUEM CHAMA: Formulário quando clica em enviar/salvar
- * FLUXO: Define a rota (PUT/POST) baseada se existe um ID de edição, dispara pra API e recarrega.
- */
+// Salva o produto com POST ou PUT conforme o modo de edição.
 async function salvarProduto(event) {
   event.preventDefault(); // Impede o F5 da página
 
@@ -214,9 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
 window.iniciarEdicaoProduto = iniciarEdicaoProduto;
 window.alternarStatusProduto = alternarStatusProduto;
 
-// ==============================================
-// CONTROLES DE ANIMAÇÃO / GAVETA DO FORMULÁRIO
-// ==============================================
+// Controle de animação e abertura do formulário.
 const newProductButton = document.getElementById("new-product-button");
 const productFormPanel = document.getElementById("product-form-panel");
 const produtoForm = document.getElementById("produto-form");
@@ -224,7 +192,7 @@ const cancelEditButton = document.getElementById("cancel-edit-button");
 const submitButton = document.getElementById("submit-button");
 const formStatus = document.getElementById("form-status");
 
-/** Abre e inicializa a Gaveta visual */
+// Abre e inicializa a Gaveta visual
 function openProductForm(isEdit = false) {
   if (!productFormPanel) return;
 
@@ -256,7 +224,7 @@ function openProductForm(isEdit = false) {
   if (firstField) firstField.focus();
 }
 
-/** Fecha a gaveta */
+// Fecha a gaveta
 function closeProductForm() {
   if (!productFormPanel) return;
 
