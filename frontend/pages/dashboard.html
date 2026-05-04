@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/styles/global.css" />
   <link rel="stylesheet" href="/styles/dashboard.css" />
 </head>
+
 <body>
   <header class="topbar">
     <div class="topbar-left">
@@ -18,81 +19,141 @@
 
     <div class="user-area">
       <div class="user-info">
-        <span class="user-label">Usuário</span>
+        <span class="user-label">Usuário logado</span>
         <span class="user-name" id="user-name">...</span>
         <span class="user-role">
           Perfil: <strong id="user-role">...</strong>
         </span>
       </div>
+
       <a href="#" id="logout-link" class="logout-btn">Sair</a>
     </div>
   </header>
 
   <main class="dashboard-container">
+
     <section class="hero-card">
       <div class="hero-content">
         <span class="hero-badge">Visão Geral</span>
+
         <h1>
-          Bem-vindo, <span id="user-name-inline">usuário</span>!
+          Painel principal do Micro ERP
         </h1>
+
         <p class="hero-description">
-          Seu perfil atual é
-          <strong><span id="user-role-inline">-</span></strong>.
-          A partir deste painel você pode acessar as principais áreas do sistema
-          de forma rápida e organizada.
+          Bem-vindo, <strong><span id="user-name-inline">usuário</span></strong>.
+          Seu perfil atual é <strong><span id="user-role-inline">-</span></strong>.
+          Acesse os módulos do sistema para gerenciar cadastros, produtos,
+          compras, vendas, estoque e estrutura financeira.
         </p>
+
         <p id="dashboard-status" class="dashboard-status"></p>
       </div>
     </section>
 
     <section class="menu-section">
       <div class="section-header">
-        <h2>Módulos do sistema</h2>
-        <p>Selecione uma área para começar.</p>
+        <span class="hero-badge">Módulos</span>
+        <h2>Áreas principais do sistema</h2>
+        <p>Escolha uma função para continuar a operação.</p>
       </div>
 
       <div class="dashboard-menu">
+
         <a class="dashboard-menu-item" href="/pages/entidades">
           <div class="menu-icon">👥</div>
           <div class="menu-text">
+            <span class="hero-badge">Cadastro</span>
             <h3>Entidades</h3>
-            <p>Cadastro e gerenciamento de clientes e fornecedores.</p>
+            <p>
+              Gerencie clientes, fornecedores e dados essenciais para as operações comerciais.
+            </p>
           </div>
         </a>
 
         <a class="dashboard-menu-item" href="/pages/produtos">
           <div class="menu-icon">📦</div>
           <div class="menu-text">
+            <span class="hero-badge">Estoque</span>
             <h3>Produtos</h3>
-            <p>Controle de produtos, preços, estoque e informações gerais.</p>
+            <p>
+              Controle produtos, preços, estoque disponível, custo médio e informações gerais.
+            </p>
           </div>
         </a>
 
         <a class="dashboard-menu-item" href="/pages/plano-contas">
           <div class="menu-icon">📊</div>
           <div class="menu-text">
+            <span class="hero-badge">Financeiro</span>
             <h3>Plano de Contas</h3>
-            <p>Organização da estrutura contábil e classificação financeira.</p>
+            <p>
+              Organize categorias financeiras, classificações contábeis e estrutura de controle.
+            </p>
           </div>
         </a>
 
         <a class="dashboard-menu-item" href="/pages/compras">
           <div class="menu-icon">🧾</div>
           <div class="menu-text">
+            <span class="hero-badge">Entrada</span>
             <h3>Compras</h3>
-            <p>Entrada de mercadorias, confirmação de recebimento e atualização automática do estoque.</p>
+            <p>
+              Registre compras, confirme recebimentos e atualize automaticamente o estoque.
+            </p>
           </div>
         </a>
 
         <a class="dashboard-menu-item" href="/pages/vendas">
           <div class="menu-icon">🛒</div>
           <div class="menu-text">
+            <span class="hero-badge">Saída</span>
             <h3>Vendas</h3>
-            <p>Pedido de venda, validação de estoque, baixa automática e comprovante simples.</p>
+            <p>
+              Crie pedidos de venda, valide estoque, registre baixas e gere comprovantes simples.
+            </p>
           </div>
         </a>
+
       </div>
     </section>
+
+    <section class="menu-section">
+      <div class="section-header">
+        <span class="hero-badge">Fluxo</span>
+        <h2>Como o sistema está organizado</h2>
+        <p>O Micro ERP segue um fluxo simples para facilitar a gestão.</p>
+      </div>
+
+      <div class="dashboard-menu">
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">1</div>
+          <div class="menu-text">
+            <h3>Cadastros base</h3>
+            <p>Cadastre entidades, produtos e plano de contas.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">2</div>
+          <div class="menu-text">
+            <h3>Compras</h3>
+            <p>Registre entradas e aumente o saldo de estoque.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">3</div>
+          <div class="menu-text">
+            <h3>Vendas</h3>
+            <p>Registre saídas e reduza o estoque automaticamente.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <script src="/scripts/api.js"></script>

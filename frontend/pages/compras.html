@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/styles/global.css" />
   <link rel="stylesheet" href="/styles/compras.css" />
 </head>
+
 <body>
   <header class="topbar">
     <div class="topbar-left">
@@ -24,29 +25,77 @@
   </header>
 
   <main class="page-shell">
+
     <section class="hero-section">
       <div class="hero-content">
         <span class="hero-badge">Módulo de Compras</span>
-        <h1>Compras e entrada de estoque</h1>
+        <h1>Compras e estoque</h1>
         <p>
-          Cadastre pedidos de compra, confirme o recebimento da mercadoria e atualize o estoque automaticamente com cálculo de custo médio e log de movimentação.
+          Cadastre compras, adicione produtos ao pedido, acompanhe os pedidos pendentes
+          e confirme a entrada para atualizar o estoque automaticamente.
         </p>
       </div>
+
       <div class="hero-stats">
-        <div class="mini-stat"><span class="mini-stat-label">Sprint</span><strong>2</strong></div>
-        <div class="mini-stat"><span class="mini-stat-label">Validação</span><strong>Compra aumenta estoque</strong></div>
+        <div class="mini-stat">
+          <span class="mini-stat-label">Sprint</span>
+          <strong>2</strong>
+        </div>
+
+        <div class="mini-stat">
+          <span class="mini-stat-label">Regra principal</span>
+          <strong>Compra aumenta estoque</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-table">
+      <div class="panel-header">
+        <span class="section-tag">Fluxo do módulo</span>
+        <h2>Como usar esta tela</h2>
+        <p>
+          Siga o fluxo abaixo para registrar uma compra e movimentar o estoque corretamente.
+        </p>
+      </div>
+
+      <div class="dashboard-menu">
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">1</div>
+          <div class="menu-text">
+            <h3>Preencha o pedido</h3>
+            <p>Selecione o fornecedor e informe os dados da compra.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">2</div>
+          <div class="menu-text">
+            <h3>Adicione os produtos</h3>
+            <p>Inclua os itens, quantidades e custos unitários.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">3</div>
+          <div class="menu-text">
+            <h3>Confirme a entrada</h3>
+            <p>Depois de salvar, confirme a compra para atualizar o estoque.</p>
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="content-grid two-columns">
-      <div class="panel panel-form">
+
+      <section class="panel panel-form" id="nova-compra">
         <div class="panel-header">
           <span class="section-tag">Nova compra</span>
-          <h2>Cadastrar pedido de compra</h2>
-          <p>Inclua fornecedor, produtos, quantidades e custo de entrada.</p>
+          <h2>Dados do pedido</h2>
+          <p>Informe primeiro o fornecedor e os dados gerais da entrada.</p>
         </div>
 
         <form id="compra-form">
+
           <div class="form-grid">
             <div class="field field-span-2">
               <label class="form-label" for="fornecedor_id">Fornecedor</label>
@@ -79,10 +128,13 @@
           <div class="items-card">
             <div class="items-header">
               <div>
-                <span class="section-tag">Itens</span>
-                <h3>Produtos da compra</h3>
+                <span class="section-tag">Itens da compra</span>
+                <h3>Produtos adicionados</h3>
               </div>
-              <button type="button" id="add-item-button" class="btn-secondary">+ Adicionar item</button>
+
+              <button type="button" id="add-item-button" class="btn-secondary">
+                + Adicionar item
+              </button>
             </div>
 
             <div class="table-wrapper compact-table">
@@ -96,6 +148,7 @@
                     <th></th>
                   </tr>
                 </thead>
+
                 <tbody id="itens-compra-tbody"></tbody>
               </table>
             </div>
@@ -107,21 +160,30 @@
           </div>
 
           <div class="form-actions">
-            <button type="submit" class="btn-primary">Salvar compra pendente</button>
-            <button type="button" id="limpar-form-button" class="btn-secondary">Limpar</button>
+            <button type="submit" class="btn-primary">
+              Salvar compra pendente
+            </button>
+
+            <button type="button" id="limpar-form-button" class="btn-secondary">
+              Limpar formulário
+            </button>
           </div>
+
           <p id="form-status" class="status-text"></p>
         </form>
-      </div>
+      </section>
 
-      <div class="panel panel-table">
+      <aside class="panel panel-table">
         <div class="panel-header">
-          <span class="section-tag">Compras</span>
-          <h2>Pedidos cadastrados</h2>
-          <p>Confirme uma compra pendente para dar entrada automática no estoque.</p>
+          <span class="section-tag">Pedidos</span>
+          <h2>Compras cadastradas</h2>
+          <p>
+            Veja as compras registradas e confirme o recebimento para movimentar o estoque.
+          </p>
         </div>
 
         <p id="compras-status" class="status-text"></p>
+
         <div class="table-wrapper">
           <table class="data-table">
             <thead>
@@ -134,20 +196,27 @@
                 <th>Ações</th>
               </tr>
             </thead>
+
             <tbody id="compras-tbody">
-              <tr><td colspan="6">Carregando...</td></tr>
+              <tr>
+                <td colspan="6">Carregando...</td>
+              </tr>
             </tbody>
           </table>
         </div>
-      </div>
+      </aside>
+
     </section>
 
     <section class="panel panel-table movements-panel">
       <div class="panel-header">
-        <span class="section-tag">Estoque</span>
+        <span class="section-tag">Histórico de estoque</span>
         <h2>Últimas movimentações</h2>
-        <p>Registro automático de entradas e saídas geradas por compras e vendas.</p>
+        <p>
+          Acompanhe as entradas e saídas geradas automaticamente por compras e vendas.
+        </p>
       </div>
+
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
@@ -160,12 +229,16 @@
               <th>Saldo novo</th>
             </tr>
           </thead>
+
           <tbody id="movimentacoes-tbody">
-            <tr><td colspan="6">Carregando...</td></tr>
+            <tr>
+              <td colspan="6">Carregando...</td>
+            </tr>
           </tbody>
         </table>
       </div>
     </section>
+
   </main>
 
   <script src="/scripts/api.js"></script>

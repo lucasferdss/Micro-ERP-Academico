@@ -3,14 +3,14 @@
 }
 
 :root {
-  --bg: #060b16;
-  --panel: rgba(10, 16, 31, 0.92);
-  --panel-2: rgba(15, 23, 42, 0.96);
-  --border: rgba(96, 165, 250, 0.14);
-  --text: #ecf3ff;
-  --muted: #94a3b8;
+  --bg: #f4f7fb;
+  --panel: #ffffff;
+  --panel-2: #f8fafc;
+  --border: #dbe7f5;
+  --text: #0f172a;
+  --muted: #64748b;
   --primary: #2563eb;
-  --shadow: 0 18px 46px rgba(0, 0, 0, 0.35);
+  --shadow: 0 18px 46px rgba(15, 23, 42, 0.10);
   --radius-xl: 24px;
   --radius-lg: 18px;
 }
@@ -22,9 +22,9 @@ body {
   min-height: 100%;
   font-family: Arial, Helvetica, sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 22%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.10), transparent 18%),
-    linear-gradient(180deg, #050914 0%, #081120 45%, #091223 100%);
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 24%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 20%),
+    linear-gradient(180deg, #ffffff 0%, #f4f7fb 48%, #eef3f9 100%);
   color: var(--text);
 }
 
@@ -70,7 +70,7 @@ body {
   color: #fff;
   font-weight: 800;
   font-size: 18px;
-  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.34);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.28);
 }
 
 .brand-texts {
@@ -85,7 +85,7 @@ body {
   font-size: 34px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #f8fbff;
+  color: #0f172a;
   text-transform: uppercase;
 }
 
@@ -100,9 +100,9 @@ body {
   margin-bottom: 16px;
   padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(96, 165, 250, 0.12);
-  border: 1px solid rgba(96, 165, 250, 0.18);
-  color: #bfdbfe;
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -114,14 +114,14 @@ body {
   font-size: 52px;
   line-height: 1.05;
   font-weight: 800;
-  color: #ffffff;
+  color: #020617;
   letter-spacing: -0.03em;
 }
 
 .login-hero p {
   margin: 0 auto;
   max-width: 640px;
-  color: #cbd5e1;
+  color: #475569;
   font-size: 18px;
   line-height: 1.8;
 }
@@ -137,10 +137,11 @@ body {
 }
 
 .hero-info-card {
-  background: rgba(8, 13, 26, 0.44);
-  border: 1px solid rgba(96, 165, 250, 0.14);
+  background: #ffffff;
+  border: 1px solid #dbe7f5;
   border-radius: 18px;
   padding: 18px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
 }
 
 .hero-info-label {
@@ -154,7 +155,7 @@ body {
 }
 
 .hero-info-card strong {
-  color: #ffffff;
+  color: #0f172a;
   font-size: 15px;
   line-height: 1.5;
 }
@@ -168,7 +169,7 @@ body {
 .login-card {
   width: 100%;
   max-width: 500px;
-  background: rgba(10, 16, 31, 0.92);
+  background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 28px;
   padding: 34px;
@@ -185,7 +186,7 @@ body {
   right: -80px;
   top: -80px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.18), transparent 65%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.13), transparent 65%);
   pointer-events: none;
 }
 
@@ -200,8 +201,8 @@ body {
   margin-bottom: 10px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(37, 99, 235, 0.12);
-  color: #93c5fd;
+  background: #dbeafe;
+  color: #1d4ed8;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -210,7 +211,7 @@ body {
 
 .login-card-header h2 {
   margin: 0 0 8px;
-  color: #ffffff;
+  color: #020617;
   font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -236,7 +237,7 @@ body {
 
 .form-label {
   margin-bottom: 8px;
-  color: #dbeafe;
+  color: #0f172a;
   font-size: 13px;
   font-weight: 700;
 }
@@ -246,21 +247,22 @@ body {
   height: 52px;
   padding: 0 16px;
   border-radius: 14px;
-  border: 1px solid rgba(96, 165, 250, 0.14);
-  background: rgba(15, 23, 42, 0.96);
-  color: #f8fbff;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
   outline: none;
   font-size: 14px;
   transition: all 0.2s ease;
 }
 
 .form-input::placeholder {
-  color: #7c8aa5;
+  color: #94a3b8;
 }
 
 .form-input:focus {
-  border-color: rgba(96, 165, 250, 0.34);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
 }
 
 .btn-primary {
@@ -279,13 +281,15 @@ body {
 
 .btn-primary:hover {
   transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.30);
 }
 
 .status-text {
   margin-top: 16px;
   min-height: 20px;
-  color: #93c5fd;
+  color: #2563eb;
   font-size: 14px;
+  font-weight: 600;
 }
 
 @media (max-width: 1080px) {
