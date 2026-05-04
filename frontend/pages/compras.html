@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Compras - Micro ERP</title>
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/compras.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Sprint 2 • Compras e Estoque</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/pages/vendas" class="nav-btn secondary">Vendas</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Módulo de Compras</span>
+        <h1>Compras e entrada de estoque</h1>
+        <p>
+          Cadastre pedidos de compra, confirme o recebimento da mercadoria e atualize o estoque automaticamente com cálculo de custo médio e log de movimentação.
+        </p>
+      </div>
+      <div class="hero-stats">
+        <div class="mini-stat"><span class="mini-stat-label">Sprint</span><strong>2</strong></div>
+        <div class="mini-stat"><span class="mini-stat-label">Validação</span><strong>Compra aumenta estoque</strong></div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+      <div class="panel panel-form">
+        <div class="panel-header">
+          <span class="section-tag">Nova compra</span>
+          <h2>Cadastrar pedido de compra</h2>
+          <p>Inclua fornecedor, produtos, quantidades e custo de entrada.</p>
+        </div>
+
+        <form id="compra-form">
+          <div class="form-grid">
+            <div class="field field-span-2">
+              <label class="form-label" for="fornecedor_id">Fornecedor</label>
+              <select id="fornecedor_id" class="form-input" required>
+                <option value="">Carregando fornecedores...</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="numero_pedido">Nº Pedido</label>
+              <input id="numero_pedido" class="form-input" type="text" placeholder="Ex: PC-001" />
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="nf_entrada">NF Entrada</label>
+              <input id="nf_entrada" class="form-input" type="text" placeholder="Ex: NF-1001" />
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="forma_pagamento">Forma de pagamento</label>
+              <input id="forma_pagamento" class="form-input" type="text" placeholder="Pix, boleto, dinheiro..." />
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="desconto">Desconto</label>
+              <input id="desconto" class="form-input" type="number" min="0" step="0.01" value="0" />
+            </div>
+          </div>
+
+          <div class="items-card">
+            <div class="items-header">
+              <div>
+                <span class="section-tag">Itens</span>
+                <h3>Produtos da compra</h3>
+              </div>
+              <button type="button" id="add-item-button" class="btn-secondary">+ Adicionar item</button>
+            </div>
+
+            <div class="table-wrapper compact-table">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Qtd.</th>
+                    <th>Custo unit.</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="itens-compra-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="totals-box">
+              <span>Total da compra</span>
+              <strong id="total-compra">R$ 0,00</strong>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Salvar compra pendente</button>
+            <button type="button" id="limpar-form-button" class="btn-secondary">Limpar</button>
+          </div>
+          <p id="form-status" class="status-text"></p>
+        </form>
+      </div>
+
+      <div class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Compras</span>
+          <h2>Pedidos cadastrados</h2>
+          <p>Confirme uma compra pendente para dar entrada automática no estoque.</p>
+        </div>
+
+        <p id="compras-status" class="status-text"></p>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Fornecedor</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Itens</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="compras-tbody">
+              <tr><td colspan="6">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-table movements-panel">
+      <div class="panel-header">
+        <span class="section-tag">Estoque</span>
+        <h2>Últimas movimentações</h2>
+        <p>Registro automático de entradas e saídas geradas por compras e vendas.</p>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Tipo</th>
+              <th>Origem</th>
+              <th>Qtd.</th>
+              <th>Saldo anterior</th>
+              <th>Saldo novo</th>
+            </tr>
+          </thead>
+          <tbody id="movimentacoes-tbody">
+            <tr><td colspan="6">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/compras.js"></script>
+</body>
+</html>

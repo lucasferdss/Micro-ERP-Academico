@@ -1,7 +1,6 @@
 import json
 import logging
 import mimetypes
-import os
 import urllib.parse
 import threading
 import webbrowser
@@ -11,142 +10,165 @@ from pathlib import Path
 from decimal import InvalidOperation, Decimal
 from app.config import supabase
 
-# Configuração de Registros (Logs)
-# Motivo: Ajuda o desenvolvedor a ver o que está acontecendo no terminal enquanto o servidor roda.
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Mapeando onde fica a pasta do Frontend
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-def parse_decimal(value: str, default: str = "0") -> float:
-    # Converte valor monetário em texto para float.
-    # Aceita formato brasileiro e retorna o padrão numérico.
-    raw = (value or "").strip().replace(".", "").replace(",", ".")
+
+def parse_decimal(value, default: str = "0") -> float:
+    raw = str(value or "").strip().replace(".", "").replace(",", ".")
     if not raw:
         raw = default
     try:
         return float(Decimal(raw))
-    except InvalidOperation:
+    except (InvalidOperation, ValueError):
         return float(default)
 
+
+def money(value) -> float:
+    return round(parse_decimal(value), 2)
+
+
 class BackendHandler(BaseHTTPRequestHandler):
-    # Classe que processa as requisições HTTP do servidor.
-    # Define se a resposta será uma página HTML ou uma ação da API.
-    
     def send_json(self, data, status=200, headers=None):
-        # Envia respostas em JSON para o frontend.
-        # Usada pelos métodos de requisição do servidor.
         self.send_response(status)
-        self.send_header('Content-Type', 'application/json')
+        self.send_header("Content-Type", "application/json")
         if headers:
             for k, v in headers.items():
                 self.send_header(k, v)
         self.end_headers()
-        self.wfile.write(json.dumps(data).encode('utf-8'))
+        self.wfile.write(json.dumps(data, default=str).encode("utf-8"))
 
     def send_error_json(self, message, status=400):
-        # Devolve uma mensagem de erro formatada para o Frontend exibir no alerta vermelho.
         self.send_json({"error": message}, status)
 
     def serve_static(self, url_path):
-        # Lê arquivos estáticos do frontend e envia para o navegador.
-        if url_path == "/pages/login":
-            file_path = FRONTEND_DIR / "pages" / "login.html"
-        elif url_path == "/pages/dashboard":
-            file_path = FRONTEND_DIR / "pages" / "dashboard.html"
-        elif url_path == "/pages/entidades":
-            file_path = FRONTEND_DIR / "pages" / "entidades.html"
-        elif url_path == "/pages/produtos":
-            file_path = FRONTEND_DIR / "pages" / "produtos.html"
-        elif url_path == "/pages/plano-contas":
-            file_path = FRONTEND_DIR / "pages" / "plano_contas.html"
-        else:
-            # Para arquivos CSS e JS que são chamados diretamente pelas tags <link> e <script>
-            file_path = FRONTEND_DIR / url_path.lstrip("/")
+        routes = {
+            "/pages/login": FRONTEND_DIR / "pages" / "login.html",
+            "/pages/dashboard": FRONTEND_DIR / "pages" / "dashboard.html",
+            "/pages/entidades": FRONTEND_DIR / "pages" / "entidades.html",
+            "/pages/produtos": FRONTEND_DIR / "pages" / "produtos.html",
+            "/pages/plano-contas": FRONTEND_DIR / "pages" / "plano_contas.html",
+            "/pages/compras": FRONTEND_DIR / "pages" / "compras.html",
+            "/pages/vendas": FRONTEND_DIR / "pages" / "vendas.html",
+        }
+        file_path = routes.get(url_path, FRONTEND_DIR / url_path.lstrip("/"))
 
-        # Validação: Se o arquivo não existir, retorna Erro 404
         if not file_path.exists() or not file_path.is_file():
             self.send_error_json("Not found", 404)
             return
 
-        # Descobre o MimeType (para dizer ao navegador se é um arquivo de texto, estilo, script ou imagem)
         mime_type, _ = mimetypes.guess_type(str(file_path))
         if not mime_type:
             mime_type = "application/octet-stream"
-
         if file_path.suffix == ".html":
             mime_type = "text/html; charset=utf-8"
 
         self.send_response(200)
-        self.send_header('Content-Type', mime_type)
+        self.send_header("Content-Type", mime_type)
         self.end_headers()
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             self.wfile.write(f.read())
 
     def get_token_from_cookie(self):
-        # Obtém do cookie o token de acesso da sessão.
-        cookies = self.headers.get('Cookie')
+        cookies = self.headers.get("Cookie")
         if not cookies:
             return None
-        for cookie in cookies.split(';'):
+        for cookie in cookies.split(";"):
             cookie = cookie.strip()
-            if cookie.startswith('sb_access_token='):
-                return cookie.split('=')[1]
+            if cookie.startswith("sb_access_token="):
+                return cookie.split("=", 1)[1]
         return None
 
     def require_auth(self):
-        # Valida a sessão do usuário e bloqueia acesso não autorizado.
         token = self.get_token_from_cookie()
         if not token:
             self.send_error_json("Unauthorized", 401)
             return None
         try:
-            # Vai até o Auth do Supabase e valida matematicamente se o cookie é real e não expirou
             user = supabase.auth.get_user(token)
             if not user:
                 self.send_error_json("Unauthorized", 401)
                 return None
-            return user.user # Se chegou aqui, o usuário existe de verdade e tem permissão!
+            return user.user
         except Exception as e:
             logger.error(f"Auth error: {e}")
             self.send_error_json("Unauthorized", 401)
             return None
-            
+
+    def read_json_body(self):
+        content_length_header = self.headers.get("Content-Length")
+        content_length = int(content_length_header) if content_length_header else 0
+        raw_body = self.rfile.read(content_length)
+        try:
+            return json.loads(raw_body.decode("utf-8")) if raw_body else {}
+        except Exception:
+            return {}
+
+    # =========================
+    # HELPERS - SPRINT 2 E 3
+    # =========================
+
+    def get_produto(self, produto_id):
+        res = supabase.table("produtos").select("*").eq("id", produto_id).execute()
+        return res.data[0] if res.data else None
+
+    def atualizar_produto_estoque(self, produto_id, novo_estoque, novo_custo=None):
+        payload = {"estoque_atual": round(float(novo_estoque), 2)}
+        if novo_custo is not None:
+            payload["preco_custo"] = round(float(novo_custo), 2)
+            produto = self.get_produto(produto_id)
+            if produto:
+                preco_venda = parse_decimal(produto.get("preco_venda", 0))
+                payload["margem_lucro"] = ((preco_venda - payload["preco_custo"]) / payload["preco_custo"] * 100) if payload["preco_custo"] > 0 else 0
+        res = supabase.table("produtos").update(payload).eq("id", produto_id).execute()
+        return res.data[0] if res.data else None
+
+    def registrar_movimentacao(self, produto_id, tipo, origem, origem_id, quantidade, saldo_anterior, saldo_novo, custo_anterior=None, custo_novo=None, motivo="", usuario_id=None):
+        payload = {
+            "produto_id": produto_id,
+            "tipo": tipo,
+            "origem": origem,
+            "origem_id": origem_id,
+            "quantidade": round(float(quantidade), 2),
+            "saldo_anterior": round(float(saldo_anterior), 2),
+            "saldo_novo": round(float(saldo_novo), 2),
+            "custo_anterior": round(float(custo_anterior), 2) if custo_anterior is not None else None,
+            "custo_novo": round(float(custo_novo), 2) if custo_novo is not None else None,
+            "motivo": motivo,
+            "usuario_id": usuario_id,
+        }
+        return supabase.table("movimentacoes_estoque").insert(payload).execute()
+
     def do_GET(self):
-        # Processa requisições GET para páginas e dados da API.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
 
-        # Redirecionamentos básicos de navegação
         if path == "/":
             self.send_response(302)
-            self.send_header('Location', '/pages/login')
+            self.send_header("Location", "/pages/login")
             self.end_headers()
             return
-            
+
         if path == "/logout":
             self.send_response(302)
-            self.send_header('Location', '/pages/login')
-            # Limpa o cookie de controle matando o acesso (data de expiração no passado)
-            self.send_header('Set-Cookie', 'sb_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT')
+            self.send_header("Location", "/pages/login")
+            self.send_header("Set-Cookie", "sb_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
             self.end_headers()
             return
 
-        # Ajuste "Clean URL" (Tira as marcações feias de /pages da URL da barra de endereços)
-        if path in ["/login", "/dashboard", "/entidades", "/produtos", "/plano-contas"]:
+        clean_routes = ["/login", "/dashboard", "/entidades", "/produtos", "/plano-contas", "/compras", "/vendas"]
+        if path in clean_routes:
             self.send_response(302)
-            self.send_header('Location', f'/pages{path}' if path == "/login" else f'/pages/{path.lstrip("/")}')
+            self.send_header("Location", f"/pages{path}" if path == "/login" else f"/pages/{path.lstrip('/')}")
             self.end_headers()
             return
 
-        # Roteador de Decisão. (É arquivo estático ou é dado da API?)
         if not path.startswith("/api/"):
-            # Se não começa com /api/, significa que ele quer baixar tela, estilo ou script.
             return self.serve_static(path)
 
-        # ROTA: Verifica quem sou eu? (Usado no topo do dashboard para carregar o e-mail logado)
         if path == "/api/me":
             token = self.get_token_from_cookie()
             try:
@@ -155,34 +177,55 @@ class BackendHandler(BaseHTTPRequestHandler):
                     u = user.user
                     self.send_json({
                         "authenticated": True,
-                        "user": {"id": u.id, "email": u.email, "nome": u.user_metadata.get("nome", "Usuário") if u.user_metadata else "Usuário"}
+                        "user": {
+                            "id": u.id,
+                            "email": u.email,
+                            "nome": u.user_metadata.get("nome", "Usuário") if u.user_metadata else "Usuário",
+                        },
                     })
                 else:
                     self.send_json({"authenticated": False}, 401)
-            except:
+            except Exception:
                 self.send_json({"authenticated": False}, 401)
             return
 
-        # Segurança Ativa - TUDO DAQUI PARA BAIXO EXIGE ESTAR LOGADO
         user = self.require_auth()
         if not user:
             return
 
         try:
-            # APIs de Busca e Listagem de Registros
             if path == "/api/produtos":
-                # Consulta: Faz um SELECT * FROM produtos ORDER BY id DESC; via Supabase
-                res = supabase.table('produtos').select('*').order('id', desc=True).execute()
-                self.send_json(res.data) # Resposta enviada ao Frontend
-                
+                res = supabase.table("produtos").select("*").order("id", desc=True).execute()
+                self.send_json(res.data)
+
             elif path == "/api/entidades":
-                res = supabase.table('entidades').select('*').order('id', desc=True).execute()
+                res = supabase.table("entidades").select("*").order("id", desc=True).execute()
                 self.send_json(res.data)
-                
+
             elif path == "/api/plano-contas":
-                # Consulta: Traz as contas e faz "Join" automático com a conta Pai dela!
-                res = supabase.table('plano_contas').select('*, conta_pai:conta_pai_id(*)').order('codigo').execute()
+                res = supabase.table("plano_contas").select("*, conta_pai:conta_pai_id(*)").order("codigo").execute()
                 self.send_json(res.data)
+
+            elif path == "/api/compras":
+                res = supabase.table("compras").select("*, fornecedor:fornecedor_id(*), itens_compra(*)").order("id", desc=True).execute()
+                self.send_json(res.data)
+
+            elif path == "/api/vendas":
+                res = supabase.table("vendas").select("*, cliente:cliente_id(*), itens_venda(*)").order("id", desc=True).execute()
+                self.send_json(res.data)
+
+            elif path == "/api/movimentacoes-estoque":
+                res = supabase.table("movimentacoes_estoque").select("*, produto:produto_id(*)").order("id", desc=True).execute()
+                self.send_json(res.data)
+
+            elif path.startswith("/api/vendas/") and path.endswith("/comprovante"):
+                venda_id = path.split("/")[-2]
+                venda = supabase.table("vendas").select("*, cliente:cliente_id(*)").eq("id", venda_id).execute()
+                itens = supabase.table("itens_venda").select("*, produto:produto_id(*)").eq("venda_id", venda_id).execute()
+                if not venda.data:
+                    return self.send_error_json("Venda não encontrada.", 404)
+                self.send_json({"venda": venda.data[0], "itens": itens.data})
+
             else:
                 self.send_error_json("Not found", 404)
         except Exception as e:
@@ -190,64 +233,47 @@ class BackendHandler(BaseHTTPRequestHandler):
             self.send_error_json(str(e), 500)
 
     def do_POST(self):
-        # Processa requisições POST para criar novos dados.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
+        data = self.read_json_body()
 
-        # Lendo o "Body" da Requisição (aquilo que o navegador mandou para o servidor salvar)
-        content_length_header = self.headers.get('Content-Length')
-        content_length = int(content_length_header) if content_length_header else 0
-        raw_body = self.rfile.read(content_length)
-        try:
-            data = json.loads(raw_body.decode('utf-8')) if raw_body else {}
-        except:
-            data = {}
-
-        # ROTA EXCEÇÃO DE SEGURANÇA: Login. Qualquer um pode chamar a rota de login.
         if path == "/api/login":
             email = data.get("email", "").strip()
             password = data.get("password", "")
             if not email or not password:
                 return self.send_error_json("E-mail e senha são obrigatórios.")
-            
             try:
-                # Dispara a verificação para dentro do motor do Supabase Auth
                 auth_res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                 token = auth_res.session.access_token
                 user = auth_res.user
-
-                # Cria o cookie invisível (Sessão) que vai ficar guardado no navegador protegendo a entrada do usuário
                 cookie = f"sb_access_token={token}; Path=/; HttpOnly; SameSite=Lax"
-                
                 self.send_json({
                     "message": "Login realizado com sucesso.",
-                    "user": {"id": user.id, "email": user.email, "nome": user.user_metadata.get("nome", "Usuário") if user.user_metadata else "Usuário"}
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "nome": user.user_metadata.get("nome", "Usuário") if user.user_metadata else "Usuário",
+                    },
                 }, headers={"Set-Cookie": cookie})
-            except Exception as e:
-                self.send_error_json(f"Falha de autenticação: Conta não encontrada ou senha inválida.", 401)
+            except Exception:
+                self.send_error_json("Falha de autenticação: Conta não encontrada ou senha inválida.", 401)
             return
 
-        # Segurança Ativa - TUDO DAQUI PARA BAIXO EXIGE ESTAR LOGADO
         user = self.require_auth()
         if not user:
             return
 
         try:
-            # Recebeu dados de novo Produto
             if path == "/api/produtos":
                 sku = data.get("sku", "").strip()
                 nome = data.get("nome", "").strip()
-                
-                # Validação Obrigatória
                 if not sku or not nome:
                     return self.send_error_json("SKU e Nome são obrigatórios.")
-                
-                # Regra de Negócio: Cálculo automático de Margem de Lucro antes mesmo de ir pro banco
-                pc = parse_decimal(str(data.get("preco_custo", "0")))
-                pv = parse_decimal(str(data.get("preco_venda", "0")))
+
+                pc = parse_decimal(data.get("preco_custo", "0"))
+                pv = parse_decimal(data.get("preco_venda", "0"))
                 margem = ((pv - pc) / pc * 100) if pc > 0 else 0
-                
-                # Monta a "caixa" (Payload) com os dados higienizados para o Banco de Dados
+
                 payload = {
                     "sku": sku,
                     "nome": nome,
@@ -256,26 +282,23 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "preco_custo": pc,
                     "preco_venda": pv,
                     "margem_lucro": margem,
-                    "estoque_atual": parse_decimal(str(data.get("estoque_atual", "0"))),
-                    "estoque_minimo": parse_decimal(str(data.get("estoque_minimo", "0"))),
-                    "ativo": True
+                    "estoque_atual": parse_decimal(data.get("estoque_atual", "0")),
+                    "estoque_minimo": parse_decimal(data.get("estoque_minimo", "0")),
+                    "ativo": True,
                 }
 
-                # Prevenção de Duplicidade (O SKU precisa ser único como código de barras na loja)
-                exist = supabase.table('produtos').select('id').eq('sku', sku).execute()
+                exist = supabase.table("produtos").select("id").eq("sku", sku).execute()
                 if exist.data:
                     return self.send_error_json("Já existe um produto com esse SKU cadastrado.", 409)
 
-                # Salva (INSERT) e envia de volta ao Javascript um código HTTP 201 (Created)
-                res = supabase.table('produtos').insert(payload).execute()
+                res = supabase.table("produtos").insert(payload).execute()
                 self.send_json(res.data[0], 201)
 
-            # Idêntico fluxo, mas voltado para Entidades (Clientes/Fornecedores)
             elif path == "/api/entidades":
                 cpf_cnpj = data.get("cpf_cnpj", "").strip()
                 if not cpf_cnpj or not data.get("nome_razao_social"):
                     return self.send_error_json("Nome e CPF/CNPJ são obrigatórios.")
-                
+
                 payload = {
                     "tipo_entidade": data.get("tipo_entidade", "").strip(),
                     "nome_razao_social": data.get("nome_razao_social", "").strip(),
@@ -290,24 +313,21 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "bairro": data.get("bairro") or None,
                     "cidade": data.get("cidade") or None,
                     "uf": data.get("uf") or None,
-                    "ativo": True
+                    "ativo": True,
                 }
-                
-                # Prevenção de Duplicidade no CNPJ/CPF
-                exist = supabase.table('entidades').select('id').eq('cpf_cnpj', cpf_cnpj).execute()
+
+                exist = supabase.table("entidades").select("id").eq("cpf_cnpj", cpf_cnpj).execute()
                 if exist.data:
                     return self.send_error_json("Já existe um cadastro com esse CPF/CNPJ.", 409)
 
-                res = supabase.table('entidades').insert(payload).execute()
+                res = supabase.table("entidades").insert(payload).execute()
                 self.send_json(res.data[0], 201)
 
-            # Fluxo de Plano de Contas
             elif path == "/api/plano-contas":
                 codigo = data.get("codigo", "").strip()
                 if not codigo or not data.get("nome"):
                     return self.send_error_json("Código e Nome são obrigatórios.")
-                
-                # Regra: Se escolher uma conta pai que está vazia no layout, manda pro banco como Nula.
+
                 cp_id = data.get("conta_pai_id")
                 payload = {
                     "codigo": codigo,
@@ -316,15 +336,191 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "natureza": data.get("natureza", "").strip(),
                     "conta_pai_id": cp_id if cp_id not in [None, "", 0, "0"] else None,
                     "aceita_lancamento": bool(data.get("aceita_lancamento", True)),
-                    "ativo": True
+                    "ativo": True,
                 }
-                
-                exist = supabase.table('plano_contas').select('id').eq('codigo', codigo).execute()
+
+                exist = supabase.table("plano_contas").select("id").eq("codigo", codigo).execute()
                 if exist.data:
                     return self.send_error_json("Já existe uma conta com esse código.", 409)
 
-                res = supabase.table('plano_contas').insert(payload).execute()
+                res = supabase.table("plano_contas").insert(payload).execute()
                 self.send_json(res.data[0], 201)
+
+            elif path == "/api/compras":
+                fornecedor_id = data.get("fornecedor_id")
+                itens = data.get("itens", [])
+                if not fornecedor_id:
+                    return self.send_error_json("Selecione um fornecedor.")
+                if not itens:
+                    return self.send_error_json("Adicione pelo menos um produto na compra.")
+
+                desconto = money(data.get("desconto", 0))
+                total_bruto = 0
+                itens_payload = []
+
+                for item in itens:
+                    produto_id = item.get("produto_id")
+                    qtd = parse_decimal(item.get("quantidade", 0))
+                    custo = money(item.get("custo_unitario", 0))
+                    if not produto_id or qtd <= 0 or custo <= 0:
+                        return self.send_error_json("Todos os itens da compra precisam de produto, quantidade e custo válidos.")
+                    subtotal = round(qtd * custo, 2)
+                    total_bruto += subtotal
+                    itens_payload.append({
+                        "produto_id": produto_id,
+                        "quantidade": qtd,
+                        "custo_unitario": custo,
+                        "subtotal": subtotal,
+                    })
+
+                total = max(round(total_bruto - desconto, 2), 0)
+                compra_payload = {
+                    "fornecedor_id": fornecedor_id,
+                    "numero_pedido": data.get("numero_pedido") or None,
+                    "nf_entrada": data.get("nf_entrada") or None,
+                    "forma_pagamento": data.get("forma_pagamento") or None,
+                    "status": "pendente",
+                    "desconto": desconto,
+                    "total": total,
+                }
+                compra = supabase.table("compras").insert(compra_payload).execute()
+                compra_id = compra.data[0]["id"]
+
+                for item in itens_payload:
+                    item["compra_id"] = compra_id
+                supabase.table("itens_compra").insert(itens_payload).execute()
+
+                self.send_json({"message": "Compra cadastrada com sucesso.", "compra": compra.data[0]}, 201)
+
+            elif path.startswith("/api/compras/") and path.endswith("/confirmar"):
+                compra_id = path.split("/")[-2]
+                compra_res = supabase.table("compras").select("*").eq("id", compra_id).execute()
+                if not compra_res.data:
+                    return self.send_error_json("Compra não encontrada.", 404)
+                compra = compra_res.data[0]
+                if compra.get("status") == "confirmada":
+                    return self.send_error_json("Essa compra já foi confirmada.", 409)
+
+                itens_res = supabase.table("itens_compra").select("*").eq("compra_id", compra_id).execute()
+                if not itens_res.data:
+                    return self.send_error_json("Essa compra não possui itens.")
+
+                for item in itens_res.data:
+                    produto = self.get_produto(item["produto_id"])
+                    if not produto:
+                        return self.send_error_json(f"Produto {item['produto_id']} não encontrado.", 404)
+
+                    estoque_anterior = parse_decimal(produto.get("estoque_atual", 0))
+                    custo_anterior = money(produto.get("preco_custo", 0))
+                    qtd = parse_decimal(item.get("quantidade", 0))
+                    custo_compra = money(item.get("custo_unitario", 0))
+                    estoque_novo = estoque_anterior + qtd
+
+                    custo_medio = ((estoque_anterior * custo_anterior) + (qtd * custo_compra)) / estoque_novo if estoque_novo > 0 else custo_compra
+
+                    self.atualizar_produto_estoque(item["produto_id"], estoque_novo, custo_medio)
+                    self.registrar_movimentacao(
+                        produto_id=item["produto_id"],
+                        tipo="ENTRADA",
+                        origem="COMPRA",
+                        origem_id=compra_id,
+                        quantidade=qtd,
+                        saldo_anterior=estoque_anterior,
+                        saldo_novo=estoque_novo,
+                        custo_anterior=custo_anterior,
+                        custo_novo=custo_medio,
+                        motivo=f"Confirmação da compra #{compra_id}",
+                        usuario_id=None,
+                    )
+
+                atualizado = supabase.table("compras").update({
+                    "status": "confirmada",
+                    "nf_entrada": data.get("nf_entrada") or compra.get("nf_entrada"),
+                    "forma_pagamento": data.get("forma_pagamento") or compra.get("forma_pagamento"),
+                    "confirmado_em": "now()",
+                }).eq("id", compra_id).execute()
+
+                self.send_json({"message": "Compra confirmada e estoque atualizado com sucesso.", "compra": atualizado.data[0] if atualizado.data else compra})
+
+            elif path == "/api/vendas":
+                cliente_id = data.get("cliente_id")
+                itens = data.get("itens", [])
+                if not cliente_id:
+                    return self.send_error_json("Selecione um cliente.")
+                if not itens:
+                    return self.send_error_json("Adicione pelo menos um produto na venda.")
+
+                desconto = money(data.get("desconto", 0))
+                total_bruto = 0
+                itens_payload = []
+
+                for item in itens:
+                    produto_id = item.get("produto_id")
+                    qtd = parse_decimal(item.get("quantidade", 0))
+                    if not produto_id or qtd <= 0:
+                        return self.send_error_json("Todos os itens da venda precisam de produto e quantidade válidos.")
+
+                    produto = self.get_produto(produto_id)
+                    if not produto:
+                        return self.send_error_json(f"Produto {produto_id} não encontrado.", 404)
+
+                    estoque_atual = parse_decimal(produto.get("estoque_atual", 0))
+                    if estoque_atual < qtd:
+                        return self.send_error_json(f"Estoque insuficiente para {produto.get('nome', 'produto')}. Saldo atual: {estoque_atual}.", 409)
+
+                    preco = money(item.get("preco_unitario", produto.get("preco_venda", 0)))
+                    custo = money(produto.get("preco_custo", 0))
+                    subtotal = round(qtd * preco, 2)
+                    total_bruto += subtotal
+                    itens_payload.append({
+                        "produto_id": produto_id,
+                        "quantidade": qtd,
+                        "preco_unitario": preco,
+                        "custo_unitario": custo,
+                        "subtotal": subtotal,
+                    })
+
+                total = max(round(total_bruto - desconto, 2), 0)
+                imposto = round(total * 0.10, 2)
+
+                venda_payload = {
+                    "cliente_id": cliente_id,
+                    "numero_pedido": data.get("numero_pedido") or None,
+                    "status": "finalizada",
+                    "desconto": desconto,
+                    "total": total,
+                    "imposto": imposto,
+                }
+                venda = supabase.table("vendas").insert(venda_payload).execute()
+                venda_id = venda.data[0]["id"]
+
+                for item in itens_payload:
+                    item["venda_id"] = venda_id
+                supabase.table("itens_venda").insert(itens_payload).execute()
+
+                for item in itens_payload:
+                    produto = self.get_produto(item["produto_id"])
+                    estoque_anterior = parse_decimal(produto.get("estoque_atual", 0))
+                    custo_anterior = money(produto.get("preco_custo", 0))
+                    qtd = parse_decimal(item.get("quantidade", 0))
+                    estoque_novo = estoque_anterior - qtd
+
+                    self.atualizar_produto_estoque(item["produto_id"], estoque_novo)
+                    self.registrar_movimentacao(
+                        produto_id=item["produto_id"],
+                        tipo="SAIDA",
+                        origem="VENDA",
+                        origem_id=venda_id,
+                        quantidade=qtd,
+                        saldo_anterior=estoque_anterior,
+                        saldo_novo=estoque_novo,
+                        custo_anterior=custo_anterior,
+                        custo_novo=custo_anterior,
+                        motivo=f"Venda #{venda_id}",
+                        usuario_id=None,
+                    )
+
+                self.send_json({"message": "Venda finalizada e estoque baixado com sucesso.", "venda": venda.data[0]}, 201)
 
             else:
                 self.send_error_json("Not found", 404)
@@ -333,33 +529,23 @@ class BackendHandler(BaseHTTPRequestHandler):
             if "duplicate key value" in str(e).lower() or "unique constraint" in str(e).lower():
                 self.send_error_json("Registro duplicado detectado no banco de dados.", 409)
             else:
-                self.send_error_json("Ocorreu um erro interno no servidor.", 500)
+                self.send_error_json(f"Ocorreu um erro interno no servidor: {e}", 500)
 
     def do_PUT(self):
-        # Processa requisições PUT para atualizar dados existentes.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
-        
         user = self.require_auth()
         if not user:
             return
 
-        content_length_header = self.headers.get('Content-Length')
-        raw_body = self.rfile.read(int(content_length_header)) if content_length_header else b""
-        try:
-            data = json.loads(raw_body.decode('utf-8'))
-        except:
-            data = {}
+        data = self.read_json_body()
 
         try:
-            # Captura na ROTA o ID final (ex: /api/produtos/2)
             if path.startswith("/api/produtos/"):
-                pid = path.split("/")[-1] # Transforma numa lista e pega o último valor do link (no caso, 2)
-                
-                pc = parse_decimal(str(data.get("preco_custo", "0")))
-                pv = parse_decimal(str(data.get("preco_venda", "0")))
+                pid = path.split("/")[-1]
+                pc = parse_decimal(data.get("preco_custo", "0"))
+                pv = parse_decimal(data.get("preco_venda", "0"))
                 margem = ((pv - pc) / pc * 100) if pc > 0 else 0
-                
                 payload = {
                     "sku": data.get("sku", "").strip(),
                     "nome": data.get("nome", "").strip(),
@@ -368,11 +554,10 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "preco_custo": pc,
                     "preco_venda": pv,
                     "margem_lucro": margem,
-                    "estoque_atual": parse_decimal(str(data.get("estoque_atual", "0"))),
-                    "estoque_minimo": parse_decimal(str(data.get("estoque_minimo", "0")))
+                    "estoque_atual": parse_decimal(data.get("estoque_atual", "0")),
+                    "estoque_minimo": parse_decimal(data.get("estoque_minimo", "0")),
                 }
-                # Executa o Update limitando usando a regra `.eq('id', pid)`, para não atualizar o banco todo rs!
-                res = supabase.table('produtos').update(payload).eq('id', pid).execute()
+                res = supabase.table("produtos").update(payload).eq("id", pid).execute()
                 self.send_json(res.data[0] if res.data else {})
 
             elif path.startswith("/api/entidades/"):
@@ -390,9 +575,9 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "numero": data.get("numero") or None,
                     "bairro": data.get("bairro") or None,
                     "cidade": data.get("cidade") or None,
-                    "uf": data.get("uf") or None
+                    "uf": data.get("uf") or None,
                 }
-                res = supabase.table('entidades').update(payload).eq('id', eid).execute()
+                res = supabase.table("entidades").update(payload).eq("id", eid).execute()
                 self.send_json(res.data[0] if res.data else {})
 
             elif path.startswith("/api/plano-contas/"):
@@ -404,11 +589,11 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "tipo_conta": data.get("tipo_conta", "").strip(),
                     "natureza": data.get("natureza", "").strip(),
                     "conta_pai_id": cp_id if cp_id not in [None, "", 0, "0"] else None,
-                    "aceita_lancamento": bool(data.get("aceita_lancamento", True))
+                    "aceita_lancamento": bool(data.get("aceita_lancamento", True)),
                 }
-                res = supabase.table('plano_contas').update(payload).eq('id', cid).execute()
+                res = supabase.table("plano_contas").update(payload).eq("id", cid).execute()
                 self.send_json(res.data[0] if res.data else {})
-                
+
             else:
                 self.send_error_json("Not found", 404)
         except Exception as e:
@@ -419,70 +604,61 @@ class BackendHandler(BaseHTTPRequestHandler):
                 self.send_error_json("Erro interno no servidor de edição.", 500)
 
     def do_PATCH(self):
-        # Processa requisições PATCH para alterar campos específicos.
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
-        
         user = self.require_auth()
         if not user:
             return
 
         try:
-            # Rota clássica capturada: "/api/produtos/2/toggle"
             if path.startswith("/api/produtos/") and path.endswith("/toggle"):
-                pid = path.split("/")[-2] # Pega o penúltimo valor (o 2)
-                
-                # Regra de Lógica Booleana: Consulta o banco para saber se tá ativo (True). Se sim, converte pra Inativo (False).
-                curr = supabase.table('produtos').select('ativo').eq('id', pid).execute()
+                pid = path.split("/")[-2]
+                curr = supabase.table("produtos").select("ativo").eq("id", pid).execute()
                 if not curr.data:
                     return self.send_error_json("Not found", 404)
-                new_ativo = not curr.data[0]['ativo'] 
-                
-                # Acerta silenciosamente o status no Banco de Dados.
-                res = supabase.table('produtos').update({'ativo': new_ativo}).eq('id', pid).execute()
+                new_ativo = not curr.data[0]["ativo"]
+                res = supabase.table("produtos").update({"ativo": new_ativo}).eq("id", pid).execute()
                 self.send_json(res.data[0])
 
             elif path.startswith("/api/entidades/") and path.endswith("/toggle"):
                 eid = path.split("/")[-2]
-                curr = supabase.table('entidades').select('ativo').eq('id', eid).execute()
+                curr = supabase.table("entidades").select("ativo").eq("id", eid).execute()
                 if not curr.data:
                     return self.send_error_json("Not found", 404)
-                new_ativo = not curr.data[0]['ativo']
-                res = supabase.table('entidades').update({'ativo': new_ativo}).eq('id', eid).execute()
+                new_ativo = not curr.data[0]["ativo"]
+                res = supabase.table("entidades").update({"ativo": new_ativo}).eq("id", eid).execute()
                 self.send_json(res.data[0])
 
             elif path.startswith("/api/plano-contas/") and path.endswith("/toggle"):
                 cid = path.split("/")[-2]
-                curr = supabase.table('plano_contas').select('ativo').eq('id', cid).execute()
+                curr = supabase.table("plano_contas").select("ativo").eq("id", cid).execute()
                 if not curr.data:
                     return self.send_error_json("Not found", 404)
-                new_ativo = not curr.data[0]['ativo']
-                res = supabase.table('plano_contas').update({'ativo': new_ativo}).eq('id', cid).execute()
+                new_ativo = not curr.data[0]["ativo"]
+                res = supabase.table("plano_contas").update({"ativo": new_ativo}).eq("id", cid).execute()
                 self.send_json(res.data[0])
+
             else:
                 self.send_error_json("Not found", 404)
         except Exception as e:
             logger.error(f"PATCH Error: {e}")
             self.send_error_json(str(e), 500)
 
+
 def run_server(port=8080):
-    # Inicia o servidor e o mantém em execução.
-    server_address = ('', port)
+    server_address = ("", port)
     httpd = HTTPServer(server_address, BackendHandler)
-    
     url = f"http://localhost:{port}"
     logger.info(f"Servidor rodando! Acesse: {url}")
-
-    # Inteligência Artifical Pura: Abre a janelinha do seu Chrome automaticamente depois de exatos 1 segundo!
     threading.Timer(1.0, lambda: webbrowser.open(url)).start()
-    
+
     try:
-        httpd.serve_forever() # Só é interrompido pelo CTRL+C no terminal
+        httpd.serve_forever()
     except KeyboardInterrupt:
         pass
     httpd.server_close()
     logger.info("Servidor parado.")
 
-# Opcionalmente, pode ser executado diretamente por este arquivo também.
+
 if __name__ == "__main__":
     run_server()

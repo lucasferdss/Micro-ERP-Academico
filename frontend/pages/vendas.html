@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vendas - Micro ERP</title>
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/vendas.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Sprint 3 • Vendas e baixa de estoque</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/pages/compras" class="nav-btn secondary">Compras</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Módulo Comercial</span>
+        <h1>Vendas e saída de estoque</h1>
+        <p>
+          Registre pedidos de venda, valide saldo disponível, impeça estoque negativo e gere comprovante simples da operação.
+        </p>
+      </div>
+      <div class="hero-stats">
+        <div class="mini-stat"><span class="mini-stat-label">Sprint</span><strong>3</strong></div>
+        <div class="mini-stat"><span class="mini-stat-label">Validação</span><strong>Venda baixa estoque</strong></div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+      <div class="panel panel-form">
+        <div class="panel-header">
+          <span class="section-tag">Nova venda</span>
+          <h2>Cadastrar pedido de venda</h2>
+          <p>Selecione cliente, produtos e quantidades. O sistema bloqueia venda sem estoque.</p>
+        </div>
+
+        <form id="venda-form">
+          <div class="form-grid">
+            <div class="field field-span-2">
+              <label class="form-label" for="cliente_id">Cliente</label>
+              <select id="cliente_id" class="form-input" required>
+                <option value="">Carregando clientes...</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="numero_pedido">Nº Pedido</label>
+              <input id="numero_pedido" class="form-input" type="text" placeholder="Ex: PV-001" />
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="desconto">Desconto</label>
+              <input id="desconto" class="form-input" type="number" min="0" step="0.01" value="0" />
+            </div>
+          </div>
+
+          <div class="items-card">
+            <div class="items-header">
+              <div>
+                <span class="section-tag">Itens</span>
+                <h3>Produtos da venda</h3>
+              </div>
+              <button type="button" id="add-item-button" class="btn-secondary">+ Adicionar item</button>
+            </div>
+
+            <div class="table-wrapper compact-table">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Estoque</th>
+                    <th>Qtd.</th>
+                    <th>Preço unit.</th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="itens-venda-tbody"></tbody>
+              </table>
+            </div>
+
+            <div class="totals-box">
+              <span>Total da venda</span>
+              <strong id="total-venda">R$ 0,00</strong>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Finalizar venda</button>
+            <button type="button" id="limpar-form-button" class="btn-secondary">Limpar</button>
+          </div>
+          <p id="form-status" class="status-text"></p>
+        </form>
+      </div>
+
+      <div class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Vendas</span>
+          <h2>Vendas realizadas</h2>
+          <p>Veja as vendas finalizadas e abra o comprovante.</p>
+        </div>
+
+        <p id="vendas-status" class="status-text"></p>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Imposto</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="vendas-tbody">
+              <tr><td colspan="6">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="comprovante-panel" class="panel receipt-panel hidden">
+      <div class="panel-header panel-header-with-action">
+        <div>
+          <span class="section-tag">Comprovante</span>
+          <h2>Comprovante da venda</h2>
+          <p>Resumo simples para apresentar na entrega da Sprint 3.</p>
+        </div>
+        <button type="button" class="btn-secondary" onclick="window.print()">Imprimir</button>
+      </div>
+      <div id="comprovante-content" class="receipt-content"></div>
+    </section>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/vendas.js"></script>
+</body>
+</html>
