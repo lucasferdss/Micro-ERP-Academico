@@ -29,8 +29,8 @@
         <h1>Produtos</h1>
         <p>
           Gerencie seu catálogo com uma experiência mais visual e profissional.
-          Cadastre produtos, controle estoque, acompanhe preços e mantenha a
-          operação organizada em um único painel.
+          Cadastre produtos, controle estoque, acompanhe preços, custo médio,
+          movimentações de estoque e mantenha a operação organizada em um único painel.
         </p>
       </div>
 
@@ -41,7 +41,7 @@
         </div>
         <div class="mini-stat">
           <span class="mini-stat-label">Controle</span>
-          <strong>Preço, margem e estoque</strong>
+          <strong>Custo médio, preço e estoque</strong>
         </div>
       </div>
     </section>
@@ -84,6 +84,11 @@
               </div>
 
               <div class="field">
+                <label class="form-label" for="custo_medio">Custo Médio</label>
+                <input id="custo_medio" class="form-input" type="text" value="0.00" readonly />
+              </div>
+
+              <div class="field">
                 <label class="form-label" for="preco_venda">Preço de Venda</label>
                 <input id="preco_venda" class="form-input" type="text" value="0.00" required />
               </div>
@@ -108,6 +113,7 @@
               <button id="submit-button" type="submit" class="btn-primary">
                 Salvar produto
               </button>
+
               <button id="cancel-edit-button" type="button" class="btn-secondary">
                 Fechar formulário
               </button>
@@ -123,7 +129,9 @@
           <div>
             <span class="section-tag">Listagem</span>
             <h2>Lista de Produtos</h2>
-            <p>Visualize, gerencie e acompanhe os produtos cadastrados.</p>
+            <p>
+              Visualize, gerencie, acompanhe o custo médio e consulte movimentações de estoque.
+            </p>
           </div>
         </div>
 
@@ -138,27 +146,65 @@
                 <th>Nome</th>
                 <th>Unidade</th>
                 <th>Preço Custo</th>
+                <th>Custo Médio</th>
                 <th>Preço Venda</th>
                 <th>Margem</th>
                 <th>Estoque</th>
                 <th>Mínimo</th>
                 <th>Status</th>
+                <th>Movimento</th>
                 <th>Ações</th>
               </tr>
             </thead>
+
             <tbody id="produtos-tbody">
               <tr>
-                <td colspan="11">Carregando...</td>
+                <td colspan="13">Carregando...</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
+
+    <section class="panel panel-table">
+      <div class="panel-header">
+        <div>
+          <span class="section-tag">Estoque</span>
+          <h2>Movimento de Estoque</h2>
+          <p>
+            Consulte entradas, saídas, quantidades, custo unitário e origem das movimentações.
+          </p>
+        </div>
+      </div>
+
+      <p id="movimentos-status" class="status-text"></p>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Produto</th>
+              <th>Tipo</th>
+              <th>Quantidade</th>
+              <th>Custo Unitário</th>
+              <th>Custo Médio</th>
+              <th>Origem</th>
+            </tr>
+          </thead>
+
+          <tbody id="movimentos-estoque-tbody">
+            <tr>
+              <td colspan="7">Nenhum movimento selecionado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <script src="/scripts/api.js"></script>
   <script src="/scripts/produtos.js"></script>
-  
 </body>
 </html>

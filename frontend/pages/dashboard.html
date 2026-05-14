@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Micro ERP</title>
+
   <link rel="stylesheet" href="/styles/global.css" />
   <link rel="stylesheet" href="/styles/dashboard.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -21,9 +24,7 @@
       <div class="user-info">
         <span class="user-label">Usuário logado</span>
         <span class="user-name" id="user-name">...</span>
-        <span class="user-role">
-          Perfil: <strong id="user-role">...</strong>
-        </span>
+        <span class="user-role">Perfil: <strong id="user-role">...</strong></span>
       </div>
 
       <a href="#" id="logout-link" class="logout-btn">Sair</a>
@@ -35,10 +36,7 @@
     <section class="hero-card">
       <div class="hero-content">
         <span class="hero-badge">Visão Geral</span>
-
-        <h1>
-          Painel principal do Micro ERP
-        </h1>
+        <h1>Painel principal do Micro ERP</h1>
 
         <p class="hero-description">
           Bem-vindo, <strong><span id="user-name-inline">usuário</span></strong>.
@@ -51,6 +49,74 @@
       </div>
     </section>
 
+    <section class="analytics-section">
+      <div class="section-header">
+        <span class="hero-badge">Indicadores</span>
+        <h2>Visão geral do sistema</h2>
+        <p>Acompanhe vendas, compras, estoque e financeiro.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span>Vendas do mês</span>
+          <strong>R$ 18.450,00</strong>
+          <p>+12% comparado ao mês anterior</p>
+        </div>
+
+        <div class="stat-card">
+          <span>Compras do mês</span>
+          <strong>R$ 9.820,00</strong>
+          <p>Entradas registradas no período</p>
+        </div>
+
+        <div class="stat-card">
+          <span>Produtos em estoque</span>
+          <strong>248</strong>
+          <p>Itens cadastrados e ativos</p>
+        </div>
+
+        <div class="stat-card">
+          <span>Saldo estimado</span>
+          <strong>R$ 8.630,00</strong>
+          <p>Entradas menos saídas</p>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card chart-large">
+          <div class="chart-header">
+            <h3>Vendas x Compras</h3>
+            <p>Comparativo dos últimos meses</p>
+          </div>
+          <canvas id="chartVendasCompras"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Estoque por categoria</h3>
+            <p>Distribuição dos produtos</p>
+          </div>
+          <canvas id="chartEstoque"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Financeiro</h3>
+            <p>Entradas, saídas e saldo</p>
+          </div>
+          <canvas id="chartFinanceiro"></canvas>
+        </div>
+
+        <div class="chart-card chart-large">
+          <div class="chart-header">
+            <h3>Movimentações do estoque</h3>
+            <p>Entradas e saídas por mês</p>
+          </div>
+          <canvas id="chartMovimentacoes"></canvas>
+        </div>
+      </div>
+    </section>
+
     <section class="menu-section">
       <div class="section-header">
         <span class="hero-badge">Módulos</span>
@@ -59,15 +125,12 @@
       </div>
 
       <div class="dashboard-menu">
-
         <a class="dashboard-menu-item" href="/pages/entidades">
           <div class="menu-icon">👥</div>
           <div class="menu-text">
             <span class="hero-badge">Cadastro</span>
             <h3>Entidades</h3>
-            <p>
-              Gerencie clientes, fornecedores e dados essenciais para as operações comerciais.
-            </p>
+            <p>Gerencie clientes, fornecedores e dados essenciais para as operações comerciais.</p>
           </div>
         </a>
 
@@ -76,9 +139,7 @@
           <div class="menu-text">
             <span class="hero-badge">Estoque</span>
             <h3>Produtos</h3>
-            <p>
-              Controle produtos, preços, estoque disponível, custo médio e informações gerais.
-            </p>
+            <p>Controle produtos, preços, estoque disponível, custo médio e informações gerais.</p>
           </div>
         </a>
 
@@ -87,9 +148,7 @@
           <div class="menu-text">
             <span class="hero-badge">Financeiro</span>
             <h3>Plano de Contas</h3>
-            <p>
-              Organize categorias financeiras, classificações contábeis e estrutura de controle.
-            </p>
+            <p>Organize categorias financeiras, classificações contábeis e estrutura de controle.</p>
           </div>
         </a>
 
@@ -98,9 +157,7 @@
           <div class="menu-text">
             <span class="hero-badge">Entrada</span>
             <h3>Compras</h3>
-            <p>
-              Registre compras, confirme recebimentos e atualize automaticamente o estoque.
-            </p>
+            <p>Registre compras, confirme recebimentos e atualize automaticamente o estoque.</p>
           </div>
         </a>
 
@@ -109,12 +166,9 @@
           <div class="menu-text">
             <span class="hero-badge">Saída</span>
             <h3>Vendas</h3>
-            <p>
-              Crie pedidos de venda, valide estoque, registre baixas e gere comprovantes simples.
-            </p>
+            <p>Crie pedidos de venda, valide estoque, registre baixas e gere comprovantes simples.</p>
           </div>
         </a>
-
       </div>
     </section>
 
@@ -126,7 +180,6 @@
       </div>
 
       <div class="dashboard-menu">
-
         <div class="dashboard-menu-item">
           <div class="menu-icon">1</div>
           <div class="menu-text">
@@ -150,7 +203,6 @@
             <p>Registre saídas e reduza o estoque automaticamente.</p>
           </div>
         </div>
-
       </div>
     </section>
 

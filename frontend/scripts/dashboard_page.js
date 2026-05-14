@@ -1,5 +1,4 @@
 async function carregarDashboard() {
-  // Captura as "bóias" (elementos do HTML onde vamos injetar texto)
   const nomeEl = document.getElementById("user-name");
   const perfilEl = document.getElementById("user-role");
   const statusEl = document.getElementById("dashboard-status");
@@ -7,23 +6,21 @@ async function carregarDashboard() {
   try {
     statusEl.textContent = "Carregando perfil...";
 
-    // Pede pro Python (rota /api/me) confirmar as credenciais
     const resposta = await API.get("/api/me");
 
-    // Validação de Segurança (Guardião da Rota)
-    // Se o backend disser que o cookie não existe ou expirou, chuta o usuário pra tela de Login!
     if (!resposta?.authenticated || !resposta?.user) {
       window.location.href = "/pages/login";
       return;
     }
 
-    // Preenche o HTML visual com os dados que o Banco de Dados retornou
     nomeEl.textContent = resposta.user.email || resposta.user.nome || "-";
-    perfilEl.textContent = resposta.user.perfil || "Admin"; // Regra de negócio: Assume 'Admin' temporariamente
+    perfilEl.textContent = resposta.user.perfil || "Admin";
     statusEl.textContent = "";
+
+    syncUserFields();
   } catch (error) {
     console.error(error);
-    window.location.href = "/pages/login"; // Qualquer falha gravíssima joga de volta pro Login
+    window.location.href = "/pages/login";
   }
 }
 
@@ -31,52 +28,248 @@ async function fazerLogout(event) {
   event.preventDefault();
 
   try {
-    // Avisa pro Backend apagar o cookie que mantinha a sessão viva
     await API.post("/api/logout", {});
   } catch (error) {
     console.error(error);
   } finally {
-    // Independente de travar ou não, sempre volta pra página de Login para limpar o estado visual
     window.location.href = "/pages/login";
   }
 }
 
-// Quando a página Dashboard inteira termina de ser lida pelo navegador, esse bloco desperta:
-document.addEventListener("DOMContentLoaded", () => {
-  const logoutBtn = document.getElementById("logout-link");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", fazerLogout);
-  }
-
-  carregarDashboard(); // Inicializa carregamento
-});
-
-
-// Sincroniza o nome do usuário em outros pontos da tela sempre que o elemento principal 'user-name' for alterado.
-const syncUserFields = () => {
+function syncUserFields() {
   const nameElement = document.getElementById("user-name");
   const roleElement = document.getElementById("user-role");
   const inlineName = document.getElementById("user-name-inline");
   const inlineRole = document.getElementById("user-role-inline");
 
-  if(!inlineName || !inlineRole) return; // Prevenção contra quebras caso o HTML mude
+  if (!inlineName || !inlineRole) return;
 
-  const name = nameElement?.textContent?.trim() || "usuário";
-  const role = roleElement?.textContent?.trim() || "-";
-
-  inlineName.textContent = name;
-  inlineRole.textContent = role;
-};
-
-// Configura o vigilante (Observer)
-const userNameNode = document.getElementById("user-name");
-const userRoleNode = document.getElementById("user-role");
-
-if (userNameNode && userRoleNode) {
-  const observer = new MutationObserver(syncUserFields);
-  observer.observe(userNameNode, { childList: true, subtree: true, characterData: true });
-  observer.observe(userRoleNode, { childList: true, subtree: true, characterData: true });
+  inlineName.textContent = nameElement?.textContent?.trim() || "usuário";
+  inlineRole.textContent = roleElement?.textContent?.trim() || "-";
 }
 
-// Força uma sincronização na primeira abertura de aba
-syncUserFields();
+function criarGraficosDashboard() {
+  if (typeof Chart === "undefined") return;
+
+  Chart.defaults.font.family =
+    "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  Chart.defaults.color = "#64748b";
+
+  const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
+
+  const chartVendasCompras = document.getElementById("chartVendasCompras");
+  if (chartVendasCompras) {
+    new Chart(chartVendasCompras, {
+      type: "line",
+      data: {
+        labels: meses,
+        datasets: [
+          {
+            label: "Vendas",
+            data: [8500, 12300, 9800, 15100, 17400, 18450],
+            borderColor: "#2563eb",
+            backgroundColor: "rgba(37, 99, 235, 0.12)",
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          },
+          {
+            label: "Compras",
+            data: [5200, 7800, 6900, 8900, 9300, 9820],
+            borderColor: "#16a34a",
+            backgroundColor: "rgba(22, 163, 74, 0.10)",
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true,
+              padding: 18
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => "R$ " + value.toLocaleString("pt-BR")
+            },
+            grid: {
+              color: "rgba(148, 163, 184, 0.18)"
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const chartEstoque = document.getElementById("chartEstoque");
+  if (chartEstoque) {
+    new Chart(chartEstoque, {
+      type: "doughnut",
+      data: {
+        labels: ["Eletrônicos", "Acessórios", "Peças", "Serviços"],
+        datasets: [
+          {
+            data: [95, 72, 54, 27],
+            backgroundColor: ["#2563eb", "#60a5fa", "#93c5fd", "#bfdbfe"],
+            borderColor: "#ffffff",
+            borderWidth: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "68%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true,
+              padding: 16
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const chartFinanceiro = document.getElementById("chartFinanceiro");
+  if (chartFinanceiro) {
+    new Chart(chartFinanceiro, {
+      type: "bar",
+      data: {
+        labels: ["Entradas", "Saídas", "Saldo"],
+        datasets: [
+          {
+            label: "Financeiro",
+            data: [18450, 9820, 8630],
+            backgroundColor: ["#2563eb", "#ef4444", "#16a34a"],
+            borderRadius: 14
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => "R$ " + value.toLocaleString("pt-BR")
+            },
+            grid: {
+              color: "rgba(148, 163, 184, 0.18)"
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const chartMovimentacoes = document.getElementById("chartMovimentacoes");
+  if (chartMovimentacoes) {
+    new Chart(chartMovimentacoes, {
+      type: "bar",
+      data: {
+        labels: meses,
+        datasets: [
+          {
+            label: "Entradas",
+            data: [42, 58, 47, 64, 71, 80],
+            backgroundColor: "#2563eb",
+            borderRadius: 12
+          },
+          {
+            label: "Saídas",
+            data: [30, 45, 39, 50, 63, 69],
+            backgroundColor: "#93c5fd",
+            borderRadius: 12
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true,
+              padding: 18
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: "rgba(148, 163, 184, 0.18)"
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const logoutBtn = document.getElementById("logout-link");
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", fazerLogout);
+  }
+
+  carregarDashboard();
+  criarGraficosDashboard();
+
+  const userNameNode = document.getElementById("user-name");
+  const userRoleNode = document.getElementById("user-role");
+
+  if (userNameNode && userRoleNode) {
+    const observer = new MutationObserver(syncUserFields);
+    observer.observe(userNameNode, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+    observer.observe(userRoleNode, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+  }
+
+  syncUserFields();
+});
