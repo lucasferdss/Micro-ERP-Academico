@@ -4,7 +4,9 @@ async function carregarDashboard() {
   const statusEl = document.getElementById("dashboard-status");
 
   try {
-    statusEl.textContent = "Carregando perfil...";
+    if (statusEl) {
+      statusEl.textContent = "Carregando perfil...";
+    }
 
     const resposta = await API.get("/api/me");
 
@@ -13,9 +15,17 @@ async function carregarDashboard() {
       return;
     }
 
-    nomeEl.textContent = resposta.user.email || resposta.user.nome || "-";
-    perfilEl.textContent = resposta.user.perfil || "Admin";
-    statusEl.textContent = "";
+    if (nomeEl) {
+      nomeEl.textContent = resposta.user.email || resposta.user.nome || "-";
+    }
+
+    if (perfilEl) {
+      perfilEl.textContent = resposta.user.perfil || "Admin";
+    }
+
+    if (statusEl) {
+      statusEl.textContent = "";
+    }
 
     syncUserFields();
   } catch (error) {
@@ -42,10 +52,13 @@ function syncUserFields() {
   const inlineName = document.getElementById("user-name-inline");
   const inlineRole = document.getElementById("user-role-inline");
 
-  if (!inlineName || !inlineRole) return;
+  if (inlineName) {
+    inlineName.textContent = nameElement?.textContent?.trim() || "usuário";
+  }
 
-  inlineName.textContent = nameElement?.textContent?.trim() || "usuário";
-  inlineRole.textContent = roleElement?.textContent?.trim() || "-";
+  if (inlineRole) {
+    inlineRole.textContent = roleElement?.textContent?.trim() || "-";
+  }
 }
 
 function criarGraficosDashboard() {
@@ -242,6 +255,98 @@ function criarGraficosDashboard() {
       }
     });
   }
+
+  const chartLucro = document.getElementById("chartLucro");
+  if (chartLucro) {
+    new Chart(chartLucro, {
+      type: "line",
+      data: {
+        labels: meses,
+        datasets: [
+          {
+            label: "Lucro estimado",
+            data: [3300, 4500, 2900, 6200, 8100, 8630],
+            borderColor: "#7c3aed",
+            backgroundColor: "rgba(124, 58, 237, 0.12)",
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 7
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              usePointStyle: true,
+              padding: 18
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => "R$ " + value.toLocaleString("pt-BR")
+            },
+            grid: {
+              color: "rgba(148, 163, 184, 0.18)"
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  }
+
+  const chartProdutosVendidos = document.getElementById("chartProdutosVendidos");
+  if (chartProdutosVendidos) {
+    new Chart(chartProdutosVendidos, {
+      type: "bar",
+      data: {
+        labels: ["Produto 01", "Produto 02", "Produto 03", "Produto 04"],
+        datasets: [
+          {
+            label: "Quantidade vendida",
+            data: [86, 64, 52, 38],
+            backgroundColor: ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"],
+            borderRadius: 14
+          }
+        ]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: {
+              color: "rgba(148, 163, 184, 0.18)"
+            }
+          },
+          y: {
+            grid: {
+              display: false
+            }
+          }
+        }
+      }
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -259,11 +364,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (userNameNode && userRoleNode) {
     const observer = new MutationObserver(syncUserFields);
+
     observer.observe(userNameNode, {
       childList: true,
       subtree: true,
       characterData: true
     });
+
     observer.observe(userRoleNode, {
       childList: true,
       subtree: true,

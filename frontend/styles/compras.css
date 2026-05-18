@@ -1,14 +1,18 @@
 :root {
-  --bg: #f4f7fb;
-  --panel: #ffffff;
-  --panel-strong: #f8fafc;
-  --border: #dbe7f5;
-  --text: #0f172a;
-  --muted: #64748b;
-  --primary: #2563eb;
-  --primary-2: #1d4ed8;
-  --green: #16a34a;
+  --bg: #050b18;
+  --panel: rgba(15, 30, 58, 0.95);
+  --panel-strong: rgba(8, 19, 39, 0.98);
+  --border: rgba(148, 163, 184, 0.16);
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --primary: #1683ff;
+  --primary-2: #0759d8;
+  --green: #10b981;
   --radius: 24px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
@@ -16,9 +20,9 @@ body {
   min-height: 100vh;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.10), transparent 28%),
-    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 24%),
-    linear-gradient(180deg, #ffffff 0%, #f4f7fb 48%, #eef3f9 100%);
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.25), transparent 28%),
+    radial-gradient(circle at top right, rgba(124, 58, 237, 0.20), transparent 28%),
+    linear-gradient(135deg, #050b18 0%, #081327 45%, #020617 100%);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -28,8 +32,8 @@ body::before {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(37, 99, 235, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(37, 99, 235, 0.035) 1px, transparent 1px);
+    linear-gradient(rgba(96, 165, 250, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(96, 165, 250, 0.035) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: linear-gradient(to bottom, black, transparent 85%);
 }
@@ -43,15 +47,15 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(8, 19, 39, 0.86);
   backdrop-filter: blur(22px);
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
 }
 
 .brand-title {
   display: block;
-  color: #020617;
+  color: #fff;
   font-size: 1.05rem;
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -88,24 +92,22 @@ body::before {
 
 .nav-btn.secondary,
 .btn-secondary {
-  color: #0f172a;
-  background: #ffffff;
-  border: 1px solid #dbe7f5;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid var(--border);
 }
 
 .nav-btn.primary,
 .btn-primary {
   color: #ffffff;
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+  background: linear-gradient(135deg, var(--primary-2), var(--primary));
+  box-shadow: 0 16px 34px rgba(22, 131, 255, 0.26);
 }
 
 .nav-btn:hover,
 .btn-primary:hover,
 .btn-secondary:hover {
   transform: translateY(-2px);
-  filter: brightness(1.03);
 }
 
 .page-shell {
@@ -124,10 +126,11 @@ body::before {
   justify-content: space-between;
   gap: 34px;
   border-radius: 34px;
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--border);
   background:
-    linear-gradient(135deg, #ffffff 0%, #eef5ff 58%, #dbeafe 100%);
-  box-shadow: 0 28px 70px rgba(37, 99, 235, 0.13);
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.22), transparent 36%),
+    linear-gradient(135deg, rgba(15, 30, 58, 0.95), rgba(8, 19, 39, 0.98));
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.38);
 }
 
 .hero-section::after {
@@ -138,7 +141,7 @@ body::before {
   right: -160px;
   top: -180px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(37, 99, 235, 0.20), transparent 66%);
+  background: radial-gradient(circle, rgba(22, 131, 255, 0.18), transparent 66%);
   filter: blur(8px);
 }
 
@@ -154,9 +157,9 @@ body::before {
   width: fit-content;
   padding: 8px 12px;
   border-radius: 999px;
-  color: #1d4ed8;
-  background: #dbeafe;
-  border: 1px solid #bfdbfe;
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.18);
+  border: 1px solid rgba(96, 165, 250, 0.28);
   font-size: 0.72rem;
   font-weight: 900;
   text-transform: uppercase;
@@ -165,7 +168,7 @@ body::before {
 
 .hero-content h1 {
   margin: 18px 0 14px;
-  color: #020617;
+  color: #fff;
   font-size: clamp(2.4rem, 5.4vw, 5.1rem);
   line-height: 0.96;
   letter-spacing: -0.07em;
@@ -174,7 +177,7 @@ body::before {
 .hero-content p {
   max-width: 720px;
   margin: 0;
-  color: #475569;
+  color: var(--muted);
   font-size: 1.08rem;
   line-height: 1.7;
 }
@@ -190,9 +193,9 @@ body::before {
 .mini-stat {
   padding: 20px;
   border-radius: 22px;
-  background: #ffffff;
-  border: 1px solid #dbe7f5;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.72);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.25);
 }
 
 .mini-stat-label {
@@ -206,7 +209,7 @@ body::before {
 }
 
 .mini-stat strong {
-  color: #0f172a;
+  color: #fff;
   font-size: 1.3rem;
   line-height: 1.2;
 }
@@ -226,9 +229,11 @@ body::before {
   overflow: hidden;
   padding: 28px;
   border-radius: var(--radius);
-  background: var(--panel);
+  background:
+    radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 34%),
+    linear-gradient(180deg, var(--panel), var(--panel-strong));
   border: 1px solid var(--border);
-  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.09);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
 }
 
 .panel::before {
@@ -236,7 +241,7 @@ body::before {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.045), transparent 42%);
+  background: linear-gradient(135deg, rgba(22, 131, 255, 0.05), transparent 42%);
 }
 
 .panel > * {
@@ -250,7 +255,7 @@ body::before {
 
 .panel-header h2 {
   margin: 12px 0 8px;
-  color: #020617;
+  color: #fff;
   font-size: clamp(1.55rem, 3vw, 2.25rem);
   letter-spacing: -0.05em;
 }
@@ -274,7 +279,7 @@ body::before {
 .form-label {
   display: block;
   margin-bottom: 8px;
-  color: #0f172a;
+  color: #e2e8f0;
   font-size: .8rem;
   font-weight: 800;
 }
@@ -283,9 +288,9 @@ body::before {
   width: 100%;
   height: 48px;
   padding: 0 14px;
-  color: #0f172a;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
+  color: #fff;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1px solid var(--border);
   border-radius: 14px;
   outline: none;
   box-sizing: border-box;
@@ -293,32 +298,30 @@ body::before {
 }
 
 .form-input:focus {
-  background: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, .10);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(22, 131, 255, .14);
 }
 
 .form-input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 select.form-input {
-  color: #0f172a;
-  background-color: #ffffff;
-  appearance: auto;
+  color: #fff;
+  background-color: rgba(15, 23, 42, 0.9);
 }
 
 select.form-input option {
-  color: #0f172a;
-  background: #ffffff;
+  color: #fff;
+  background: #081327;
 }
 
 .items-card {
   margin-top: 22px;
   padding: 20px;
   border-radius: 22px;
-  background: #f8fafc;
-  border: 1px solid #dbe7f5;
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid var(--border);
 }
 
 .items-header {
@@ -331,7 +334,7 @@ select.form-input option {
 
 .items-header h3 {
   margin: 10px 0 0;
-  color: #020617;
+  color: #fff;
   font-size: 1.25rem;
 }
 
@@ -339,8 +342,8 @@ select.form-input option {
   width: 100%;
   overflow-x: auto;
   border-radius: 18px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.65);
 }
 
 .data-table {
@@ -352,18 +355,18 @@ select.form-input option {
 .data-table th {
   padding: 15px 14px;
   text-align: left;
-  color: #0f172a;
+  color: #93c5fd;
   font-size: .74rem;
   text-transform: uppercase;
   letter-spacing: .08em;
-  background: #eff6ff;
-  border-bottom: 1px solid #dbeafe;
+  background: rgba(37, 99, 235, 0.12);
+  border-bottom: 1px solid var(--border);
 }
 
 .data-table td {
   padding: 15px 14px;
-  color: #334155;
-  border-top: 1px solid #e2e8f0;
+  color: #e5e7eb;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
   font-size: .9rem;
 }
 
@@ -372,7 +375,7 @@ select.form-input option {
 }
 
 .data-table tbody tr:hover {
-  background: #f8fbff;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .compact-table .data-table {
@@ -386,17 +389,17 @@ select.form-input option {
   justify-content: space-between;
   align-items: center;
   border-radius: 18px;
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border: 1px solid #bfdbfe;
+  background: linear-gradient(135deg, rgba(7, 89, 216, 0.35), rgba(22, 131, 255, 0.18));
+  border: 1px solid rgba(96, 165, 250, 0.26);
 }
 
 .totals-box span {
-  color: #475569;
+  color: #bfdbfe;
   font-weight: 800;
 }
 
 .totals-box strong {
-  color: #1d4ed8;
+  color: #fff;
   font-size: 1.55rem;
 }
 
@@ -416,7 +419,7 @@ select.form-input option {
 .status-text {
   min-height: 20px;
   margin-top: 14px;
-  color: var(--muted);
+  color: #38bdf8;
   font-weight: 700;
 }
 
