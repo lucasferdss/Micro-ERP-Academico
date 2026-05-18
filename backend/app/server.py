@@ -5,6 +5,7 @@ import urllib.parse
 import threading
 import webbrowser
 
+from datetime import date, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from decimal import InvalidOperation, Decimal
@@ -53,6 +54,13 @@ class BackendHandler(BaseHTTPRequestHandler):
             "/pages/plano-contas": FRONTEND_DIR / "pages" / "plano_contas.html",
             "/pages/compras": FRONTEND_DIR / "pages" / "compras.html",
             "/pages/vendas": FRONTEND_DIR / "pages" / "vendas.html",
+            "/pages/contas-receber": FRONTEND_DIR / "pages" / "contas_receber.html",
+            "/pages/contas-pagar": FRONTEND_DIR / "pages" / "contas_pagar.html",
+            "/pages/fluxo-caixa": FRONTEND_DIR / "pages" / "fluxo_caixa.html",
+            "/pages/lucratividade": FRONTEND_DIR / "pages" / "lucratividade.html",
+            "/pages/dre": FRONTEND_DIR / "pages" / "dre.html",
+            "/pages/balanco": FRONTEND_DIR / "pages" / "balanco.html",
+            "/pages/impostos": FRONTEND_DIR / "pages" / "impostos.html",
         }
         file_path = routes.get(url_path, FRONTEND_DIR / url_path.lstrip("/"))
 
@@ -168,6 +176,29 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         return supabase.table("movimentacoes_estoque").insert(payload).execute()
 
+    def normalizar_data_vencimento(self, data):
+        data_vencimento = data.get("data_vencimento") or data.get("vencimento")
+        if data_vencimento:
+            return str(data_vencimento).split("T")[0]
+        return date.today().isoformat()
+
+    def somar_valores(self, registros, campo="valor", apenas_pendente=False):
+        total = 0
+        for item in registros or []:
+            if apenas_pendente and str(item.get("status", "")).upper() in ["PAGO", "PAGA", "QUITADO", "QUITADA"]:
+                continue
+            total += float(item.get(campo) or 0)
+        return round(total, 2)
+
+    def calcular_cmv_vendas(self):
+        itens = supabase.table("itens_venda").select("*").execute()
+        cmv = 0
+        for item in itens.data or []:
+            quantidade = parse_decimal(item.get("quantidade", 0))
+            custo = money(item.get("custo_unitario", 0))
+            cmv += quantidade * custo
+        return round(cmv, 2)
+
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
         path = parsed_path.path
@@ -196,6 +227,13 @@ class BackendHandler(BaseHTTPRequestHandler):
             "/plano-contas",
             "/compras",
             "/vendas",
+            "/contas-receber",
+            "/contas-pagar",
+            "/fluxo-caixa",
+            "/lucratividade",
+            "/dre",
+            "/balanco",
+            "/impostos",
         ]
 
         if path in clean_routes:
@@ -272,6 +310,184 @@ class BackendHandler(BaseHTTPRequestHandler):
                     .execute()
                 )
                 self.send_json(res.data)
+
+            elif path == "/api/contas-receber":
+                res = (
+                    supabase.table("contas_receber")
+                    .select("*")
+                    .order("id", desc=True)
+                    .execute()
+                )
+                self.send_json(res.data)
+
+            elif path == "/api/contas-pagar":
+                res = (
+                    supabase.table("contas_pagar")
+                    .select("*")
+                    .order("id", desc=True)
+                    .execute()
+                )
+                self.send_json(res.data)
+
+            elif path == "/api/fluxo-caixa":
+                hoje = date.today()
+                amanha = hoje + timedelta(days=1)
+                inicio_mes = hoje.replace(day=1).isoformat()
+                hoje_iso = hoje.isoformat()
+                amanha_iso = amanha.isoformat()
+
+                receber_res = supabase.table("contas_receber").select("*").execute()
+                pagar_res = supabase.table("contas_pagar").select("*").execute()
+
+                receber = receber_res.data or []
+                pagar = pagar_res.data or []
+
+                receber_mes = [
+                    c for c in receber
+                    if str(c.get("data_vencimento") or "") >= inicio_mes
+                    and str(c.get("status", "")).upper() not in ["PAGO", "PAGA", "QUITADO", "QUITADA"]
+                ]
+
+                pagar_mes = [
+                    c for c in pagar
+                    if str(c.get("data_vencimento") or "") >= inicio_mes
+                    and str(c.get("status", "")).upper() not in ["PAGO", "PAGA", "QUITADO", "QUITADA"]
+                ]
+
+                receber_hoje = [c for c in receber_mes if str(c.get("data_vencimento") or "") == hoje_iso]
+                receber_amanha = [c for c in receber_mes if str(c.get("data_vencimento") or "") == amanha_iso]
+                pagar_hoje = [c for c in pagar_mes if str(c.get("data_vencimento") or "") == hoje_iso]
+                pagar_amanha = [c for c in pagar_mes if str(c.get("data_vencimento") or "") == amanha_iso]
+
+                total_receber_mes = self.somar_valores(receber_mes)
+                total_pagar_mes = self.somar_valores(pagar_mes)
+
+                self.send_json({
+                    "data_base": hoje_iso,
+                    "receber_mes": total_receber_mes,
+                    "pagar_mes": total_pagar_mes,
+                    "saldo_previsto": round(total_receber_mes - total_pagar_mes, 2),
+                    "receber_hoje": self.somar_valores(receber_hoje),
+                    "receber_amanha": self.somar_valores(receber_amanha),
+                    "pagar_hoje": self.somar_valores(pagar_hoje),
+                    "pagar_amanha": self.somar_valores(pagar_amanha),
+                    "contas_receber_hoje": receber_hoje,
+                    "contas_receber_amanha": receber_amanha,
+                    "contas_pagar_hoje": pagar_hoje,
+                    "contas_pagar_amanha": pagar_amanha,
+                })
+
+            elif path == "/api/lucratividade":
+                itens_res = (
+                    supabase.table("itens_venda")
+                    .select("*, produto:produto_id(*)")
+                    .execute()
+                )
+
+                linhas = []
+                receita_total = 0
+                custo_total = 0
+
+                for item in itens_res.data or []:
+                    quantidade = parse_decimal(item.get("quantidade", 0))
+                    preco = money(item.get("preco_unitario", 0))
+                    custo = money(item.get("custo_unitario", 0))
+                    receita = round(quantidade * preco, 2)
+                    custo_venda = round(quantidade * custo, 2)
+                    lucro = round(receita - custo_venda, 2)
+
+                    receita_total += receita
+                    custo_total += custo_venda
+
+                    produto = item.get("produto") or {}
+                    linhas.append({
+                        "produto_id": item.get("produto_id"),
+                        "produto_nome": produto.get("nome") or f"Produto #{item.get('produto_id')}",
+                        "quantidade": quantidade,
+                        "preco_unitario": preco,
+                        "custo_unitario": custo,
+                        "receita": receita,
+                        "custo_total": custo_venda,
+                        "lucro": lucro,
+                        "margem_percentual": round((lucro / receita) * 100, 2) if receita > 0 else 0,
+                    })
+
+                lucro_total = round(receita_total - custo_total, 2)
+
+                self.send_json({
+                    "receita_total": round(receita_total, 2),
+                    "custo_total": round(custo_total, 2),
+                    "lucro_total": lucro_total,
+                    "margem_percentual": round((lucro_total / receita_total) * 100, 2) if receita_total > 0 else 0,
+                    "itens": linhas,
+                })
+
+            elif path == "/api/impostos":
+                vendas = supabase.table("vendas").select("*").execute()
+                receita = sum(float(v.get("total") or 0) for v in vendas.data or [])
+                aliquota_simples = 0.06
+                imposto = round(receita * aliquota_simples, 2)
+
+                self.send_json({
+                    "regime": "Simples Nacional",
+                    "aliquota": aliquota_simples,
+                    "aliquota_percentual": 6,
+                    "receita_bruta": round(receita, 2),
+                    "imposto_estimado": imposto,
+                })
+
+            elif path == "/api/dre":
+                vendas = supabase.table("vendas").select("*").execute()
+                receita = sum(float(v.get("total") or 0) for v in vendas.data or [])
+                cmv = self.calcular_cmv_vendas()
+                lucro_bruto = round(receita - cmv, 2)
+                imposto_simples = round(receita * 0.06, 2)
+                lucro_liquido = round(lucro_bruto - imposto_simples, 2)
+
+                self.send_json({
+                    "receita_bruta": round(receita, 2),
+                    "deducoes_impostos": imposto_simples,
+                    "receita_liquida": round(receita - imposto_simples, 2),
+                    "cmv": cmv,
+                    "lucro_bruto": lucro_bruto,
+                    "lucro_liquido": lucro_liquido,
+                    "resultado": "LUCRO" if lucro_liquido >= 0 else "PREJUÍZO",
+                })
+
+            elif path == "/api/balanco":
+                produtos = supabase.table("produtos").select("*").execute()
+                receber_res = supabase.table("contas_receber").select("*").execute()
+                pagar_res = supabase.table("contas_pagar").select("*").execute()
+
+                estoque = sum(
+                    float(p.get("estoque_atual") or 0) * float(p.get("custo_medio") or p.get("preco_custo") or 0)
+                    for p in produtos.data or []
+                )
+
+                total_receber = self.somar_valores(receber_res.data, apenas_pendente=True)
+                total_pagar = self.somar_valores(pagar_res.data, apenas_pendente=True)
+
+                vendas = supabase.table("vendas").select("*").execute()
+                compras = supabase.table("compras").select("*").execute()
+
+                caixa_estimado = (
+                    sum(float(v.get("total") or 0) for v in vendas.data or [])
+                    - sum(float(c.get("total") or 0) for c in compras.data or [])
+                )
+
+                ativo = round(max(caixa_estimado, 0) + estoque + total_receber, 2)
+                passivo = round(total_pagar, 2)
+                patrimonio_liquido = round(ativo - passivo, 2)
+
+                self.send_json({
+                    "ativo": ativo,
+                    "passivo": passivo,
+                    "patrimonio_liquido": patrimonio_liquido,
+                    "caixa_estimado": round(caixa_estimado, 2),
+                    "estoque": round(estoque, 2),
+                    "contas_receber": total_receber,
+                    "contas_pagar": total_pagar,
+                })
 
             elif path == "/api/movimentacoes-estoque":
                 query = urllib.parse.parse_qs(parsed_path.query)
@@ -535,6 +751,17 @@ class BackendHandler(BaseHTTPRequestHandler):
                 compra = supabase.table("compras").insert(compra_payload).execute()
                 compra_id = compra.data[0]["id"]
 
+                conta_pagar_payload = {
+                    "compra_id": compra_id,
+                    "fornecedor_id": fornecedor_id,
+                    "descricao": f"Compra #{compra_id}",
+                    "valor": total,
+                    "data_vencimento": self.normalizar_data_vencimento(data),
+                    "status": "PENDENTE",
+                }
+
+                supabase.table("contas_pagar").insert(conta_pagar_payload).execute()
+
                 for item in itens_payload:
                     item["compra_id"] = compra_id
 
@@ -701,6 +928,17 @@ class BackendHandler(BaseHTTPRequestHandler):
 
                 venda = supabase.table("vendas").insert(venda_payload).execute()
                 venda_id = venda.data[0]["id"]
+
+                conta_receber_payload = {
+                    "venda_id": venda_id,
+                    "cliente_id": cliente_id,
+                    "descricao": f"Venda #{venda_id}",
+                    "valor": total,
+                    "data_vencimento": self.normalizar_data_vencimento(data),
+                    "status": "PENDENTE",
+                }
+
+                supabase.table("contas_receber").insert(conta_receber_payload).execute()
 
                 for item in itens_payload:
                     item["venda_id"] = venda_id
