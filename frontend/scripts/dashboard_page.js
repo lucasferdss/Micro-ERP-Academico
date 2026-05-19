@@ -1,3 +1,37 @@
+function aplicarPermissoes(perfilRecebido) {
+  const perfil = String(perfilRecebido || "Vendedor").toUpperCase();
+
+  const financeiro = document.querySelector(".sidebar-group");
+  const linkEntidades = document.querySelector('a[href="/pages/entidades"]');
+  const linkProdutos = document.querySelector('a[href="/pages/produtos"]');
+  const linkCompras = document.querySelector('a[href="/pages/compras"]');
+  const linkVendas = document.querySelector('a[href="/pages/vendas"]');
+
+  if (perfil === "ADMIN") {
+    return;
+  }
+
+  if (perfil === "VENDEDOR") {
+    if (financeiro) financeiro.style.display = "none";
+    if (linkCompras) linkCompras.style.display = "none";
+    return;
+  }
+
+  if (perfil === "FINANCEIRO") {
+    if (linkEntidades) linkEntidades.style.display = "none";
+    if (linkProdutos) linkProdutos.style.display = "none";
+    if (linkCompras) linkCompras.style.display = "none";
+    if (linkVendas) linkVendas.style.display = "none";
+    return;
+  }
+
+  if (perfil === "ESTOQUE") {
+    if (financeiro) financeiro.style.display = "none";
+    if (linkEntidades) linkEntidades.style.display = "none";
+    if (linkVendas) linkVendas.style.display = "none";
+  }
+}
+
 async function carregarDashboard() {
   const nomeEl = document.getElementById("user-name");
   const perfilEl = document.getElementById("user-role");
@@ -20,8 +54,10 @@ async function carregarDashboard() {
     }
 
     if (perfilEl) {
-      perfilEl.textContent = resposta.user.perfil || "Admin";
+      perfilEl.textContent = resposta.user.perfil || "Vendedor";
     }
+
+    aplicarPermissoes(resposta.user.perfil);
 
     if (statusEl) {
       statusEl.textContent = "";

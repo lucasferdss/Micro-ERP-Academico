@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usuários - Micro ERP</title>
+
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/compras.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Administração de Acesso</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Usuários</span>
+        <h1>Gestão de usuários e perfis</h1>
+        <p>
+          Vincule usuários já criados no Supabase Auth aos perfis de acesso do ERP.
+        </p>
+      </div>
+
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Perfis</span>
+          <strong>Admin, Vendedor, Financeiro e Estoque</strong>
+        </div>
+
+        <div class="mini-stat">
+          <span class="mini-stat-label">Acesso</span>
+          <strong>Controle por função</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+      <section class="panel panel-form">
+        <div class="panel-header">
+          <span class="section-tag">Novo vínculo</span>
+          <h2>Definir perfil</h2>
+          <p>Informe o ID do usuário do Supabase Auth e selecione o perfil.</p>
+        </div>
+
+        <form id="usuario-form">
+          <div class="form-grid">
+            <div class="field field-span-2">
+              <label class="form-label" for="user_id">User ID</label>
+              <input
+                id="user_id"
+                class="form-input"
+                type="text"
+                required
+                placeholder="Ex: f80fb014-8e5a-4f1b-ab56-83e20de231ee"
+              />
+            </div>
+
+            <div class="field">
+              <label class="form-label" for="perfil">Perfil</label>
+              <select id="perfil" class="form-input" required>
+                <option value="">Selecione...</option>
+                <option value="ADMIN">ADMIN</option>
+                <option value="VENDEDOR">VENDEDOR</option>
+                <option value="FINANCEIRO">FINANCEIRO</option>
+                <option value="ESTOQUE">ESTOQUE</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-primary" type="submit">Salvar perfil</button>
+            <button class="btn-secondary" type="button" id="limpar-form">Limpar</button>
+          </div>
+
+          <p id="usuario-status" class="status-text"></p>
+        </form>
+      </section>
+
+      <aside class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Como criar conta</span>
+          <h2>Passo a passo</h2>
+          <p>Para este projeto, a conta é criada primeiro no Supabase Auth.</p>
+        </div>
+
+        <div class="receipt-content">
+          <p><strong>1.</strong> Supabase → Authentication → Users</p>
+          <p><strong>2.</strong> Clique em Add user</p>
+          <p><strong>3.</strong> Defina e-mail e senha</p>
+          <p><strong>4.</strong> Copie o User ID</p>
+          <p><strong>5.</strong> Cole aqui e escolha o perfil</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel panel-table movements-panel">
+      <div class="panel-header">
+        <span class="section-tag">Cadastrados</span>
+        <h2>Usuários vinculados</h2>
+        <p>Lista dos usuários que já possuem perfil ativo no sistema.</p>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User ID</th>
+              <th>Perfil</th>
+              <th>Ativo</th>
+            </tr>
+          </thead>
+
+          <tbody id="usuarios-tbody">
+            <tr>
+              <td colspan="4">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/usuarios.js"></script>
+</body>
+</html>

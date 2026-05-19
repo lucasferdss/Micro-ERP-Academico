@@ -61,6 +61,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             "/pages/dre": FRONTEND_DIR / "pages" / "dre.html",
             "/pages/balanco": FRONTEND_DIR / "pages" / "balanco.html",
             "/pages/impostos": FRONTEND_DIR / "pages" / "impostos.html",
+            "/pages/usuarios": FRONTEND_DIR / "pages" / "usuarios.html",
         }
         file_path = routes.get(url_path, FRONTEND_DIR / url_path.lstrip("/"))
 
@@ -431,6 +432,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             "/dre",
             "/balanco",
             "/impostos",
+            "/usuarios",
         ]
 
         if path in clean_routes:
@@ -726,6 +728,16 @@ class BackendHandler(BaseHTTPRequestHandler):
                     })
 
                 self.send_json(movimentos)
+
+
+            elif path == "/api/usuarios":
+                res = (
+                    supabase.table("usuarios_perfis")
+                    .select("*, perfil:perfil_id(*)")
+                    .order("id", desc=True)
+                    .execute()
+                )
+                self.send_json(res.data)
 
             elif path.startswith("/api/vendas/") and path.endswith("/comprovante"):
                 venda_id = path.split("/")[-2]
@@ -1192,6 +1204,47 @@ class BackendHandler(BaseHTTPRequestHandler):
                 self.send_json({
                     "message": "Venda finalizada e estoque baixado com sucesso.",
                     "venda": venda.data[0]
+                }, 201)
+
+
+            elif path == "/api/usuarios/perfil":
+                user_id = str(data.get("user_id") or "").strip()
+                perfil_nome = str(data.get("perfil") or "").strip().upper()
+
+                if not user_id or not perfil_nome:
+                    return self.send_error_json("User ID e perfil são obrigatórios.")
+
+                if perfil_nome not in ["ADMIN", "VENDEDOR", "FINANCEIRO", "ESTOQUE"]:
+                    return self.send_error_json("Perfil inválido. Use ADMIN, VENDEDOR, FINANCEIRO ou ESTOQUE.")
+
+                perfil_res = (
+                    supabase.table("perfis_acesso")
+                    .select("id")
+                    .eq("nome", perfil_nome)
+                    .limit(1)
+                    .execute()
+                )
+
+                if not perfil_res.data:
+                    return self.send_error_json("Perfil não encontrado no banco.", 404)
+
+                perfil_id = perfil_res.data[0]["id"]
+
+                supabase.table("usuarios_perfis").update({"ativo": False}).eq("user_id", user_id).execute()
+
+                novo = (
+                    supabase.table("usuarios_perfis")
+                    .insert({
+                        "user_id": user_id,
+                        "perfil_id": perfil_id,
+                        "ativo": True
+                    })
+                    .execute()
+                )
+
+                self.send_json({
+                    "message": "Perfil vinculado com sucesso.",
+                    "usuario_perfil": novo.data[0] if novo.data else None
                 }, 201)
 
             else:
