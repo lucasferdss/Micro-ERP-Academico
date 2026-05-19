@@ -111,6 +111,203 @@ class BackendHandler(BaseHTTPRequestHandler):
             self.send_error_json("Unauthorized", 401)
             return None
 
+    def get_user_profile(self, user):
+        """
+        Busca o perfil do usuário logado no banco.
+
+        Tabelas usadas:
+        - usuarios_perfis.user_id
+        - usuarios_perfis.perfil_id
+        - usuarios_perfis.ativo
+        - perfis_acesso.nome
+
+        Se não encontrar perfil ativo, usa Vendedor como padrão.
+        """
+        user_id = str(getattr(user, "id", "") or "").strip()
+        email = str(getattr(user, "email", "") or "").strip().lower()
+
+        try:
+            if user_id:
+                # 1) Busca o vínculo do usuário com o perfil
+                vinculo_res = (
+                    supabase.table("usuarios_perfis")
+                    .select("perfil_id")
+                    .eq("user_id", user_id)
+                    .eq("ativo", True)
+                    .limit(1)
+                    .execute()
+                )
+
+                if vinculo_res.data:
+                    perfil_id = vinculo_res.data[0].get("perfil_id")
+
+                    # 2) Busca o nome do perfil na tabela perfis_acesso
+                    perfil_res = (
+                        supabase.table("perfis_acesso")
+                        .select("nome")
+                        .eq("id", perfil_id)
+                        .limit(1)
+                        .execute()
+                    )
+
+                    if perfil_res.data:
+                        nome_perfil = str(perfil_res.data[0].get("nome") or "").strip().upper()
+
+                        if nome_perfil == "ADMIN":
+                            return "Admin"
+
+                        if nome_perfil == "FINANCEIRO":
+                            return "Financeiro"
+
+                        if nome_perfil == "ESTOQUE":
+                            return "Estoque"
+
+                        if nome_perfil == "VENDEDOR":
+                            return "Vendedor"
+
+        except Exception as e:
+            logger.error(f"Erro ao buscar perfil no banco: {e}")
+
+        # Fallback: metadata ou admin pelo e-mail
+        metadata = getattr(user, "user_metadata", None) or {}
+        perfil = metadata.get("perfil") or metadata.get("role") or metadata.get("tipo")
+
+        if perfil:
+            perfil = str(perfil).strip().upper()
+        else:
+            perfil = ""
+
+        if email == "admin@erp.com" or perfil == "ADMIN":
+            return "Admin"
+
+        if perfil == "FINANCEIRO":
+            return "Financeiro"
+
+        if perfil == "ESTOQUE":
+            return "Estoque"
+
+        return "Vendedor"
+
+    def can_access_page(self, user, path):
+        perfil = self.get_user_profile(user)
+
+        if perfil == "Admin":
+            return True
+
+        vendedor_pages = [
+            "/pages/dashboard",
+            "/pages/entidades",
+            "/pages/produtos",
+            "/pages/vendas",
+        ]
+
+        estoque_pages = [
+            "/pages/dashboard",
+            "/pages/produtos",
+            "/pages/compras",
+        ]
+
+        financeiro_pages = [
+            "/pages/dashboard",
+            "/pages/contas-receber",
+            "/pages/contas-pagar",
+            "/pages/fluxo-caixa",
+            "/pages/lucratividade",
+            "/pages/dre",
+            "/pages/balanco",
+            "/pages/impostos",
+        ]
+
+        if perfil == "Vendedor":
+            return path in vendedor_pages
+
+        if perfil == "Estoque":
+            return path in estoque_pages
+
+        if perfil == "Financeiro":
+            return path in financeiro_pages
+
+        return False
+
+    def can_access_api(self, user, path, method="GET"):
+        perfil = self.get_user_profile(user)
+
+        if perfil == "Admin":
+            return True
+
+        vendedor_get = [
+            "/api/me",
+            "/api/produtos",
+            "/api/entidades",
+            "/api/vendas",
+            "/api/movimentacoes-estoque",
+        ]
+
+        vendedor_post = [
+            "/api/vendas",
+            "/api/entidades",
+        ]
+
+        estoque_get = [
+            "/api/me",
+            "/api/produtos",
+            "/api/compras",
+            "/api/movimentacoes-estoque",
+        ]
+
+        estoque_post = [
+            "/api/produtos",
+            "/api/compras",
+        ]
+
+        financeiro_get = [
+            "/api/me",
+            "/api/contas-receber",
+            "/api/contas-pagar",
+            "/api/fluxo-caixa",
+            "/api/lucratividade",
+            "/api/dre",
+            "/api/balanco",
+            "/api/impostos",
+            "/api/vendas",
+            "/api/compras",
+        ]
+
+        if perfil == "Vendedor":
+            if method == "GET":
+                return (
+                    path in vendedor_get
+                    or (path.startswith("/api/vendas/") and path.endswith("/comprovante"))
+                )
+            if method == "POST":
+                return path in vendedor_post
+            if method in ["PUT", "PATCH"]:
+                return path.startswith("/api/entidades/")
+            return False
+
+        if perfil == "Estoque":
+            if method == "GET":
+                return path in estoque_get
+            if method == "POST":
+                return path in estoque_post
+            if method in ["PUT", "PATCH"]:
+                return path.startswith("/api/produtos/")
+            return False
+
+        if perfil == "Financeiro":
+            if method == "GET":
+                return path in financeiro_get
+            return False
+
+        return False
+
+    def require_permission(self, user, path, method="GET"):
+        if self.can_access_api(user, path, method):
+            return True
+
+        self.send_error_json("Sem permissão para acessar este recurso.", 403)
+        return False
+
     def read_json_body(self):
         content_length_header = self.headers.get("Content-Length")
         content_length = int(content_length_header) if content_length_header else 0
@@ -246,6 +443,15 @@ class BackendHandler(BaseHTTPRequestHandler):
             return
 
         if not path.startswith("/api/"):
+            if path.startswith("/pages/") and path != "/pages/login":
+                user = self.require_auth()
+                if not user:
+                    return
+
+                if not self.can_access_page(user, path):
+                    self.send_error_json("Sem permissão para acessar esta página.", 403)
+                    return
+
             return self.serve_static(path)
 
         if path == "/api/me":
@@ -262,6 +468,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                             "id": u.id,
                             "email": u.email,
                             "nome": u.user_metadata.get("nome", "Usuário") if u.user_metadata else "Usuário",
+                            "perfil": self.get_user_profile(u),
                         },
                     })
                 else:
@@ -273,6 +480,9 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         user = self.require_auth()
         if not user:
+            return
+
+        if not self.require_permission(user, path, "GET"):
             return
 
         try:
@@ -577,6 +787,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                         "id": user.id,
                         "email": user.email,
                         "nome": user.user_metadata.get("nome", "Usuário") if user.user_metadata else "Usuário",
+                        "perfil": self.get_user_profile(user),
                     },
                 }, headers={"Set-Cookie": cookie})
             except Exception:
@@ -589,6 +800,9 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         user = self.require_auth()
         if not user:
+            return
+
+        if not self.require_permission(user, path, "POST"):
             return
 
         try:
@@ -999,6 +1213,9 @@ class BackendHandler(BaseHTTPRequestHandler):
         if not user:
             return
 
+        if not self.require_permission(user, path, "PUT"):
+            return
+
         data = self.read_json_body()
 
         try:
@@ -1085,6 +1302,9 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         user = self.require_auth()
         if not user:
+            return
+
+        if not self.require_permission(user, path, "PATCH"):
             return
 
         try:
