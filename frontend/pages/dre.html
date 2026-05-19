@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DRE - Micro ERP</title>
+
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/compras.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Sprint 5 • Fechamento Contábil</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/pages/fluxo-caixa" class="nav-btn secondary">Fluxo de Caixa</a>
+      <a href="/pages/balanco" class="nav-btn secondary">Balanço</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">DRE</span>
+        <h1>Demonstração do Resultado</h1>
+        <p>
+          Relatório gerencial que mostra receita, custos, impostos e o resultado final
+          da empresa: lucro ou prejuízo.
+        </p>
+      </div>
+
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Regime</span>
+          <strong>Simples Nacional</strong>
+        </div>
+
+        <div class="mini-stat">
+          <span class="mini-stat-label">Objetivo</span>
+          <strong>Lucro ou prejuízo</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-table">
+      <div class="panel-header">
+        <span class="section-tag">Resumo do Resultado</span>
+        <h2>Indicadores principais</h2>
+        <p>Valores calculados automaticamente com base nas vendas e custos registrados.</p>
+      </div>
+
+      <div class="dashboard-menu">
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">R$</div>
+          <div class="menu-text">
+            <h3 id="receita-bruta">R$ 0,00</h3>
+            <p>Receita bruta de vendas.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">%</div>
+          <div class="menu-text">
+            <h3 id="impostos">R$ 0,00</h3>
+            <p>Imposto estimado do Simples Nacional.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">=</div>
+          <div class="menu-text">
+            <h3 id="lucro-liquido">R$ 0,00</h3>
+            <p>Lucro ou prejuízo final.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+
+      <section class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Relatório Contábil</span>
+          <h2>DRE simplificada</h2>
+          <p>Estrutura básica da Demonstração do Resultado do Exercício.</p>
+        </div>
+
+        <p id="dre-status" class="status-text">Carregando...</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Conta</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+
+            <tbody id="dre-tbody">
+              <tr>
+                <td colspan="3">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Resultado</span>
+          <h2>Situação da empresa</h2>
+          <p>Resumo interpretado do resultado final.</p>
+        </div>
+
+        <div class="receipt-content">
+          <div class="receipt-top">
+            <div>
+              <h3 id="resultado-label">Calculando...</h3>
+              <p id="resultado-descricao">
+                Aguarde enquanto o sistema calcula o resultado.
+              </p>
+            </div>
+
+            <div class="receipt-total">
+              <span>Margem líquida</span>
+              <strong id="margem-liquida">0%</strong>
+              <small>Lucro líquido / Receita bruta</small>
+            </div>
+          </div>
+
+          <div class="totals-box">
+            <span>Resultado final</span>
+            <strong id="resultado-final">R$ 0,00</strong>
+          </div>
+        </div>
+      </aside>
+
+    </section>
+
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/dre.js"></script>
+</body>
+</html>

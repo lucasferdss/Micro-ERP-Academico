@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Balanço Patrimonial - Micro ERP</title>
+
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/compras.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Sprint 5 • Fechamento Contábil</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/pages/dre" class="nav-btn secondary">DRE</a>
+      <a href="/pages/impostos" class="nav-btn secondary">Impostos</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Balanço Patrimonial</span>
+        <h1>Ativo, Passivo e Patrimônio Líquido</h1>
+        <p>
+          Relatório contábil simplificado que mostra a posição patrimonial da empresa
+          com base no estoque, contas a receber, contas a pagar e caixa estimado.
+        </p>
+      </div>
+
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Estrutura</span>
+          <strong>Ativo = Passivo + PL</strong>
+        </div>
+
+        <div class="mini-stat">
+          <span class="mini-stat-label">Objetivo</span>
+          <strong>Posição patrimonial</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-table">
+      <div class="panel-header">
+        <span class="section-tag">Resumo Patrimonial</span>
+        <h2>Indicadores principais</h2>
+        <p>Valores calculados automaticamente com base nas operações do ERP.</p>
+      </div>
+
+      <div class="dashboard-menu">
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">A</div>
+          <div class="menu-text">
+            <h3 id="ativo-total">R$ 0,00</h3>
+            <p>Total do Ativo.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">P</div>
+          <div class="menu-text">
+            <h3 id="passivo-total">R$ 0,00</h3>
+            <p>Total do Passivo.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">PL</div>
+          <div class="menu-text">
+            <h3 id="pl-total">R$ 0,00</h3>
+            <p>Patrimônio Líquido.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+      <section class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Ativo</span>
+          <h2>Bens e direitos</h2>
+          <p>Recursos controlados pela empresa.</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Conta</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="ativo-tbody">
+              <tr>
+                <td colspan="3">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Passivo + PL</span>
+          <h2>Obrigações e patrimônio</h2>
+          <p>Fontes de financiamento da empresa.</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Grupo</th>
+                <th>Conta</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="passivo-tbody">
+              <tr>
+                <td colspan="3">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel panel-table movements-panel">
+      <div class="panel-header">
+        <span class="section-tag">Conferência</span>
+        <h2>Equação patrimonial</h2>
+        <p>Validação simplificada do balanço patrimonial.</p>
+      </div>
+
+      <div class="receipt-content">
+        <div class="receipt-top">
+          <div>
+            <h3 id="equacao-label">Calculando...</h3>
+            <p id="equacao-descricao">
+              O sistema está calculando Ativo, Passivo e Patrimônio Líquido.
+            </p>
+          </div>
+
+          <div class="receipt-total">
+            <span>Diferença</span>
+            <strong id="diferenca-balanco">R$ 0,00</strong>
+            <small>Ativo - (Passivo + PL)</small>
+          </div>
+        </div>
+
+        <div class="totals-box">
+          <span>Ativo = Passivo + Patrimônio Líquido</span>
+          <strong id="equacao-final">R$ 0,00 = R$ 0,00</strong>
+        </div>
+      </div>
+
+      <p id="balanco-status" class="status-text">Carregando...</p>
+    </section>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/balanco.js"></script>
+</body>
+</html>

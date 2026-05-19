@@ -12,34 +12,63 @@
 </head>
 
 <body>
-
   <aside class="sidebar">
-    <div class="sidebar-brand">
-      <strong>Micro ERP</strong>
-      <span>Painel de Gestão</span>
+    <div class="sidebar-brand sidebar-brand-row">
+      <div class="sidebar-logo">⬡</div>
+      <div>
+        <strong>Micro ERP</strong>
+        <span>Painel de Gestão</span>
+      </div>
     </div>
 
     <nav class="sidebar-menu">
-      <a href="/pages/dashboard" class="active">📊 Dashboard</a>
+      <a href="/pages/dashboard" class="active">
+        <span class="nav-icon">⌂</span>
+        <span>Dashboard</span>
+      </a>
 
-      <a href="/pages/entidades">👥 Entidades</a>
-      <a href="/pages/produtos">📦 Produtos</a>
-      <a href="/pages/plano-contas">💰 Plano de Contas</a>
-      <a href="/pages/compras">🧾 Compras</a>
-      <a href="/pages/vendas">🛒 Vendas</a>
+      <a href="/pages/entidades">
+        <span class="nav-icon">♙</span>
+        <span>Entidades</span>
+      </a>
 
-      <div class="sidebar-divider"></div>
+      <a href="/pages/produtos">
+        <span class="nav-icon">⬡</span>
+        <span>Produtos</span>
+      </a>
 
-      <a href="/pages/contas-receber">💵 Contas a Receber</a>
-      <a href="/pages/contas-pagar">💳 Contas a Pagar</a>
-      <a href="/pages/fluxo-caixa">📈 Fluxo de Caixa</a>
-      <a href="/pages/lucratividade">📊 Lucratividade</a>
+      <a href="/pages/compras">
+        <span class="nav-icon">▣</span>
+        <span>Compras</span>
+      </a>
 
-      <div class="sidebar-divider"></div>
+      <a href="/pages/vendas">
+        <span class="nav-icon">🛒</span>
+        <span>Vendas</span>
+      </a>
 
-      <a href="/pages/dre">📑 DRE</a>
-      <a href="/pages/balanco">🏦 Balanço Patrimonial</a>
-      <a href="/pages/impostos">🧾 Impostos</a>
+      <a href="/pages/produtos">
+        <span class="nav-icon">▧</span>
+        <span>Estoque</span>
+      </a>
+
+      <div class="sidebar-group">
+        <div class="sidebar-group-title">
+          <span class="nav-icon">ⓢ</span>
+          <span>Financeiro</span>
+          <span class="group-arrow">⌄</span>
+        </div>
+
+        <div class="sidebar-submenu">
+          <a href="/pages/contas-receber">Contas a Receber</a>
+          <a href="/pages/contas-pagar">Contas a Pagar</a>
+          <a href="/pages/fluxo-caixa">Fluxo de Caixa</a>
+          <a href="/pages/dre">DRE</a>
+          <a href="/pages/balanco">Balanço Patrimonial</a>
+          <a href="/pages/impostos">Impostos (Simples)</a>
+          <a href="/pages/lucratividade">Lucratividade</a>
+        </div>
+      </div>
     </nav>
 
     <div style="display:none;">
@@ -47,95 +76,38 @@
       <span id="user-role">...</span>
     </div>
 
-    <a href="#" id="logout-link" class="sidebar-logout">
-      Sair
-    </a>
+    <a href="#" id="logout-link" class="sidebar-logout">↪ Sair</a>
   </aside>
 
   <main class="dashboard-container dashboard-with-sidebar">
-
     <section class="hero-card">
 
-      <div class="dashboard-topbar">
-        <div class="topbar-filters">
-
-          <div class="filter-group">
-            <label>Mês</label>
-            <select>
-              <option>Todos</option>
-              <option>Janeiro</option>
-              <option>Fevereiro</option>
-              <option>Março</option>
-              <option>Abril</option>
-              <option>Maio</option>
-              <option>Junho</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>Equipe Vendas</label>
-            <select>
-              <option>Todos</option>
-              <option>Equipe A</option>
-              <option>Equipe B</option>
-              <option>Equipe C</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>Fornecedor</label>
-            <select>
-              <option>Todos</option>
-              <option>Fornecedor A</option>
-              <option>Fornecedor B</option>
-              <option>Fornecedor C</option>
-            </select>
-          </div>
-
-        </div>
-      </div>
 
       <div class="hero-content">
-
         <div>
           <span class="hero-badge">Dashboard</span>
-
           <h1>Painel principal do Micro ERP</h1>
 
           <p class="hero-description">
-            Bem-vindo,
-            <strong>
-              <span id="user-name-inline">usuário</span>
-            </strong>.
-
-            Perfil atual:
-            <strong>
-              <span id="user-role-inline">-</span>
-            </strong>.
+            Bem-vindo, <strong><span id="user-name-inline">usuário</span></strong>.
+            Perfil atual: <strong><span id="user-role-inline">-</span></strong>.
           </p>
         </div>
 
         <p id="dashboard-status" class="dashboard-status"></p>
-
       </div>
     </section>
 
     <section class="analytics-section">
-
       <div class="section-header">
         <div>
           <span class="hero-badge">Indicadores</span>
-
           <h2>Resumo geral</h2>
-
-          <p>
-            Vendas, compras, estoque, financeiro e movimentações.
-          </p>
+          <p>Vendas, compras, estoque, financeiro e movimentações.</p>
         </div>
       </div>
 
       <div class="stats-grid">
-
         <div class="stat-card">
           <span>Vendas do mês</span>
           <strong>R$ 18.450,00</strong>
@@ -159,17 +131,14 @@
           <strong>R$ 8.630,00</strong>
           <p>Entradas menos saídas</p>
         </div>
-
       </div>
 
       <div class="charts-grid">
-
         <div class="chart-card chart-large">
           <div class="chart-header">
             <h3>Vendas x Compras</h3>
             <p>Comparativo dos últimos meses</p>
           </div>
-
           <canvas id="chartVendasCompras"></canvas>
         </div>
 
@@ -178,7 +147,6 @@
             <h3>Estoque por categoria</h3>
             <p>Distribuição dos produtos</p>
           </div>
-
           <canvas id="chartEstoque"></canvas>
         </div>
 
@@ -187,7 +155,6 @@
             <h3>Financeiro</h3>
             <p>Entradas, saídas e saldo</p>
           </div>
-
           <canvas id="chartFinanceiro"></canvas>
         </div>
 
@@ -196,7 +163,6 @@
             <h3>Movimentações do estoque</h3>
             <p>Entradas e saídas por mês</p>
           </div>
-
           <canvas id="chartMovimentacoes"></canvas>
         </div>
 
@@ -205,7 +171,6 @@
             <h3>Lucro estimado</h3>
             <p>Evolução mensal do resultado</p>
           </div>
-
           <canvas id="chartLucro"></canvas>
         </div>
 
@@ -214,17 +179,13 @@
             <h3>Produtos mais vendidos</h3>
             <p>Ranking de saída</p>
           </div>
-
           <canvas id="chartProdutosVendidos"></canvas>
         </div>
-
       </div>
 
       <div class="tables-grid">
-
         <div class="table-card">
           <h3>Últimas vendas</h3>
-
           <table>
             <thead>
               <tr>
@@ -233,20 +194,17 @@
                 <th>Status</th>
               </tr>
             </thead>
-
             <tbody>
               <tr>
                 <td>Cliente A</td>
                 <td>R$ 1.250,00</td>
                 <td>Concluída</td>
               </tr>
-
               <tr>
                 <td>Cliente B</td>
                 <td>R$ 890,00</td>
                 <td>Concluída</td>
               </tr>
-
               <tr>
                 <td>Cliente C</td>
                 <td>R$ 2.100,00</td>
@@ -258,7 +216,6 @@
 
         <div class="table-card">
           <h3>Produtos com baixo estoque</h3>
-
           <table>
             <thead>
               <tr>
@@ -267,20 +224,17 @@
                 <th>Mínimo</th>
               </tr>
             </thead>
-
             <tbody>
               <tr>
                 <td>Produto 01</td>
                 <td>4</td>
                 <td>10</td>
               </tr>
-
               <tr>
                 <td>Produto 02</td>
                 <td>7</td>
                 <td>15</td>
               </tr>
-
               <tr>
                 <td>Produto 03</td>
                 <td>2</td>
@@ -292,7 +246,6 @@
 
         <div class="table-card">
           <h3>Resumo financeiro</h3>
-
           <table>
             <thead>
               <tr>
@@ -301,20 +254,17 @@
                 <th>Percentual</th>
               </tr>
             </thead>
-
             <tbody>
               <tr>
                 <td>Entradas</td>
                 <td>R$ 18.450,00</td>
                 <td>100%</td>
               </tr>
-
               <tr>
                 <td>Saídas</td>
                 <td>R$ 9.820,00</td>
                 <td>53%</td>
               </tr>
-
               <tr>
                 <td>Saldo</td>
                 <td>R$ 8.630,00</td>
@@ -326,7 +276,6 @@
 
         <div class="table-card">
           <h3>Movimentações recentes</h3>
-
           <table>
             <thead>
               <tr>
@@ -335,20 +284,17 @@
                 <th>Quantidade</th>
               </tr>
             </thead>
-
             <tbody>
               <tr>
                 <td>18/05/2026</td>
                 <td>Entrada</td>
                 <td>32</td>
               </tr>
-
               <tr>
                 <td>17/05/2026</td>
                 <td>Saída</td>
                 <td>18</td>
               </tr>
-
               <tr>
                 <td>16/05/2026</td>
                 <td>Entrada</td>
@@ -357,15 +303,11 @@
             </tbody>
           </table>
         </div>
-
       </div>
-
     </section>
-
   </main>
 
   <script src="/scripts/api.js"></script>
   <script src="/scripts/dashboard_page.js"></script>
-
 </body>
 </html>

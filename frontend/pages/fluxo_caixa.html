@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxo de Caixa - Micro ERP</title>
+
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/compras.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Sprint 4 • Fluxo de Caixa</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/pages/contas-receber" class="nav-btn secondary">Receber</a>
+      <a href="/pages/contas-pagar" class="nav-btn secondary">Pagar</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Financeiro</span>
+        <h1>Fluxo de caixa</h1>
+        <p>
+          Veja o que a empresa tem para receber e pagar, com destaque para
+          vencimentos de hoje, amanhã e saldo previsto do mês.
+        </p>
+      </div>
+
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Foco</span>
+          <strong>Receber x Pagar</strong>
+        </div>
+
+        <div class="mini-stat">
+          <span class="mini-stat-label">Controle</span>
+          <strong>Hoje e amanhã</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-table">
+      <div class="panel-header">
+        <span class="section-tag">Resumo mensal</span>
+        <h2>Indicadores do fluxo</h2>
+        <p>Valores previstos com base nas contas a receber e contas a pagar.</p>
+      </div>
+
+      <div class="dashboard-menu">
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">+</div>
+          <div class="menu-text">
+            <h3 id="receber-mes">R$ 0,00</h3>
+            <p>Total a receber no mês.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">-</div>
+          <div class="menu-text">
+            <h3 id="pagar-mes">R$ 0,00</h3>
+            <p>Total a pagar no mês.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">=</div>
+          <div class="menu-text">
+            <h3 id="saldo-previsto">R$ 0,00</h3>
+            <p>Saldo previsto do mês.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+      <section class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Hoje</span>
+          <h2>Vencimentos de hoje</h2>
+          <p>Entradas e saídas previstas para a data atual.</p>
+        </div>
+
+        <div class="table-wrapper compact-table">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody id="vencimentos-hoje-tbody">
+              <tr>
+                <td colspan="4">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Amanhã</span>
+          <h2>Vencimentos de amanhã</h2>
+          <p>Previsão de contas para o próximo dia.</p>
+        </div>
+
+        <div class="table-wrapper compact-table">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody id="vencimentos-amanha-tbody">
+              <tr>
+                <td colspan="4">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel panel-table movements-panel">
+      <div class="panel-header">
+        <span class="section-tag">Resumo diário</span>
+        <h2>Totais rápidos</h2>
+        <p>Controle separado por recebimentos e pagamentos.</p>
+      </div>
+
+      <div class="dashboard-menu">
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">📥</div>
+          <div class="menu-text">
+            <h3 id="receber-hoje">R$ 0,00</h3>
+            <p>A receber hoje.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">📤</div>
+          <div class="menu-text">
+            <h3 id="pagar-hoje">R$ 0,00</h3>
+            <p>A pagar hoje.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">📥</div>
+          <div class="menu-text">
+            <h3 id="receber-amanha">R$ 0,00</h3>
+            <p>A receber amanhã.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">📤</div>
+          <div class="menu-text">
+            <h3 id="pagar-amanha">R$ 0,00</h3>
+            <p>A pagar amanhã.</p>
+          </div>
+        </div>
+      </div>
+
+      <p id="fluxo-status" class="status-text">Carregando...</p>
+    </section>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/fluxo_caixa.js"></script>
+</body>
+</html>

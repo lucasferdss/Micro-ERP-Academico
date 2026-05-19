@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Impostos - Micro ERP</title>
+
+  <link rel="stylesheet" href="/styles/global.css" />
+  <link rel="stylesheet" href="/styles/compras.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand-texts">
+        <span class="brand-title">Micro ERP</span>
+        <span class="brand-subtitle">Sprint 5 • Simples Nacional</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
+      <a href="/pages/dre" class="nav-btn secondary">DRE</a>
+      <a href="/pages/balanco" class="nav-btn secondary">Balanço</a>
+      <a href="/logout" class="nav-btn primary">Sair</a>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-section">
+      <div class="hero-content">
+        <span class="hero-badge">Impostos</span>
+        <h1>Cálculo do Simples Nacional</h1>
+        <p>
+          Tela simplificada para calcular o imposto estimado com base na receita bruta
+          das vendas. Para a entrega, o sistema mantém somente o regime Simples Nacional.
+        </p>
+      </div>
+
+      <div class="hero-stats">
+        <div class="mini-stat">
+          <span class="mini-stat-label">Regime usado</span>
+          <strong>Simples Nacional</strong>
+        </div>
+
+        <div class="mini-stat">
+          <span class="mini-stat-label">Alíquota padrão</span>
+          <strong id="aliquota-hero">6%</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-table">
+      <div class="panel-header">
+        <span class="section-tag">Resumo Tributário</span>
+        <h2>Indicadores de impostos</h2>
+        <p>Valores calculados automaticamente com base nas vendas registradas.</p>
+      </div>
+
+      <div class="dashboard-menu">
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">R$</div>
+          <div class="menu-text">
+            <h3 id="receita-bruta">R$ 0,00</h3>
+            <p>Receita bruta de vendas.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">%</div>
+          <div class="menu-text">
+            <h3 id="aliquota">0%</h3>
+            <p>Alíquota aplicada.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">🧾</div>
+          <div class="menu-text">
+            <h3 id="imposto-estimado">R$ 0,00</h3>
+            <p>Imposto estimado a recolher.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid two-columns">
+      <section class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Memória de Cálculo</span>
+          <h2>Como o imposto foi calculado</h2>
+          <p>Modelo simplificado para fins acadêmicos.</p>
+        </div>
+
+        <p id="impostos-status" class="status-text">Carregando...</p>
+
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+
+            <tbody id="impostos-tbody">
+              <tr>
+                <td colspan="3">Carregando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="panel panel-table">
+        <div class="panel-header">
+          <span class="section-tag">Resultado</span>
+          <h2>Imposto do período</h2>
+          <p>Resumo final do cálculo tributário.</p>
+        </div>
+
+        <div class="receipt-content">
+          <div class="receipt-top">
+            <div>
+              <h3 id="regime-label">Simples Nacional</h3>
+              <p>
+                O cálculo considera a receita bruta multiplicada pela alíquota
+                simplificada definida no sistema.
+              </p>
+            </div>
+
+            <div class="receipt-total">
+              <span>Valor estimado</span>
+              <strong id="imposto-final">R$ 0,00</strong>
+              <small>Receita bruta x alíquota</small>
+            </div>
+          </div>
+
+          <div class="totals-box">
+            <span>Fórmula aplicada</span>
+            <strong id="formula-imposto">R$ 0,00 × 0%</strong>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script src="/scripts/api.js"></script>
+  <script src="/scripts/impostos.js"></script>
+</body>
+</html>

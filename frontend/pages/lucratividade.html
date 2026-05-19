@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contas a Pagar - Micro ERP</title>
+  <title>Lucratividade - Micro ERP</title>
 
   <link rel="stylesheet" href="/styles/global.css" />
   <link rel="stylesheet" href="/styles/compras.css" />
@@ -14,39 +14,38 @@
     <div class="topbar-left">
       <div class="brand-texts">
         <span class="brand-title">Micro ERP</span>
-        <span class="brand-subtitle">Sprint 4 • Financeiro</span>
+        <span class="brand-subtitle">Sprint 4 • Resultado</span>
       </div>
     </div>
 
     <div class="topbar-right">
       <a href="/pages/dashboard" class="nav-btn secondary">Dashboard</a>
-      <a href="/pages/contas-receber" class="nav-btn secondary">Contas a Receber</a>
+      <a href="/pages/dre" class="nav-btn secondary">DRE</a>
       <a href="/pages/fluxo-caixa" class="nav-btn secondary">Fluxo de Caixa</a>
       <a href="/logout" class="nav-btn primary">Sair</a>
     </div>
   </header>
 
   <main class="page-shell">
-
     <section class="hero-section">
       <div class="hero-content">
-        <span class="hero-badge">Financeiro</span>
-        <h1>Contas a pagar</h1>
+        <span class="hero-badge">Lucratividade</span>
+        <h1>Relatório de lucratividade</h1>
         <p>
-          Visualize os valores que a empresa precisa pagar com base nas compras realizadas.
-          Toda compra cadastrada gera automaticamente uma conta a pagar.
+          Veja o resultado simples das vendas usando a fórmula:
+          preço de venda menos preço de custo.
         </p>
       </div>
 
       <div class="hero-stats">
         <div class="mini-stat">
-          <span class="mini-stat-label">Origem</span>
-          <strong>Compras cadastradas</strong>
+          <span class="mini-stat-label">Fórmula</span>
+          <strong>Venda - Custo</strong>
         </div>
 
         <div class="mini-stat">
-          <span class="mini-stat-label">Controle</span>
-          <strong>Fornecedores e vencimentos</strong>
+          <span class="mini-stat-label">Base</span>
+          <strong>Itens vendidos</strong>
         </div>
       </div>
     </section>
@@ -54,32 +53,40 @@
     <section class="panel panel-table">
       <div class="panel-header">
         <span class="section-tag">Resumo</span>
-        <h2>Indicadores de pagamento</h2>
-        <p>Acompanhe valores pendentes, pagos e vencimentos próximos.</p>
+        <h2>Indicadores de lucratividade</h2>
+        <p>Valores calculados automaticamente com base nos itens vendidos.</p>
       </div>
 
       <div class="dashboard-menu">
         <div class="dashboard-menu-item">
           <div class="menu-icon">R$</div>
           <div class="menu-text">
-            <h3 id="total-pagar">R$ 0,00</h3>
-            <p>Total em contas a pagar.</p>
+            <h3 id="receita-total">R$ 0,00</h3>
+            <p>Receita total das vendas.</p>
           </div>
         </div>
 
         <div class="dashboard-menu-item">
-          <div class="menu-icon">✓</div>
+          <div class="menu-icon">C</div>
           <div class="menu-text">
-            <h3 id="total-pago">R$ 0,00</h3>
-            <p>Total já pago.</p>
+            <h3 id="custo-total">R$ 0,00</h3>
+            <p>Custo total dos produtos vendidos.</p>
           </div>
         </div>
 
         <div class="dashboard-menu-item">
-          <div class="menu-icon">!</div>
+          <div class="menu-icon">%</div>
           <div class="menu-text">
-            <h3 id="total-pendente">R$ 0,00</h3>
-            <p>Total pendente de pagamento.</p>
+            <h3 id="margem-total">0%</h3>
+            <p>Margem de lucratividade.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-menu-item">
+          <div class="menu-icon">=</div>
+          <div class="menu-text">
+            <h3 id="lucro-total">R$ 0,00</h3>
+            <p>Lucro total estimado.</p>
           </div>
         </div>
       </div>
@@ -87,39 +94,39 @@
 
     <section class="panel panel-table">
       <div class="panel-header">
-        <span class="section-tag">Pagamentos</span>
-        <h2>Lista de contas a pagar</h2>
-        <p>Contas geradas automaticamente a partir das compras cadastradas no sistema.</p>
+        <span class="section-tag">Produtos vendidos</span>
+        <h2>Lucro por item</h2>
+        <p>Comparação entre preço de venda, custo e resultado por produto.</p>
       </div>
 
-      <p id="contas-status" class="status-text">Carregando...</p>
+      <p id="lucratividade-status" class="status-text">Carregando...</p>
 
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Compra</th>
-              <th>Fornecedor</th>
-              <th>Descrição</th>
-              <th>Valor</th>
-              <th>Vencimento</th>
-              <th>Status</th>
+              <th>Produto</th>
+              <th>Qtd.</th>
+              <th>Preço Venda</th>
+              <th>Preço Custo</th>
+              <th>Receita</th>
+              <th>Custo Total</th>
+              <th>Lucro</th>
+              <th>Margem</th>
             </tr>
           </thead>
 
-          <tbody id="contas-pagar-tbody">
+          <tbody id="lucratividade-tbody">
             <tr>
-              <td colspan="7">Carregando...</td>
+              <td colspan="8">Carregando...</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
-
   </main>
 
   <script src="/scripts/api.js"></script>
-  <script src="/scripts/contas_pagar.js"></script>
+  <script src="/scripts/lucratividade.js"></script>
 </body>
 </html>
