@@ -155,16 +155,16 @@ class BackendHandler(BaseHTTPRequestHandler):
                         nome_perfil = str(perfil_res.data[0].get("nome") or "").strip().upper()
 
                         if nome_perfil == "ADMIN":
-                            return "Admin"
+                            return "ADMIN"
 
                         if nome_perfil == "FINANCEIRO":
-                            return "Financeiro"
+                            return "FINANCEIRO"
 
                         if nome_perfil == "ESTOQUE":
-                            return "Estoque"
+                            return "ESTOQUE"
 
                         if nome_perfil == "VENDEDOR":
-                            return "Vendedor"
+                            return "VENDEDOR"
 
         except Exception as e:
             logger.error(f"Erro ao buscar perfil no banco: {e}")
@@ -179,20 +179,20 @@ class BackendHandler(BaseHTTPRequestHandler):
             perfil = ""
 
         if email == "admin@erp.com" or perfil == "ADMIN":
-            return "Admin"
+            return "ADMIN"
 
         if perfil == "FINANCEIRO":
-            return "Financeiro"
+            return "FINANCEIRO"
 
         if perfil == "ESTOQUE":
-            return "Estoque"
+            return "ESTOQUE"
 
-        return "Vendedor"
+        return "VENDEDOR"
 
     def can_access_page(self, user, path):
         perfil = self.get_user_profile(user)
 
-        if perfil == "Admin":
+        if perfil == "ADMIN":
             return True
 
         vendedor_pages = [
@@ -219,13 +219,13 @@ class BackendHandler(BaseHTTPRequestHandler):
             "/pages/impostos",
         ]
 
-        if perfil == "Vendedor":
+        if perfil == "VENDEDOR":
             return path in vendedor_pages
 
-        if perfil == "Estoque":
+        if perfil == "ESTOQUE":
             return path in estoque_pages
 
-        if perfil == "Financeiro":
+        if perfil == "FINANCEIRO":
             return path in financeiro_pages
 
         return False
@@ -233,7 +233,7 @@ class BackendHandler(BaseHTTPRequestHandler):
     def can_access_api(self, user, path, method="GET"):
         perfil = self.get_user_profile(user)
 
-        if perfil == "Admin":
+        if perfil == "ADMIN":
             return True
 
         vendedor_get = [
@@ -274,7 +274,7 @@ class BackendHandler(BaseHTTPRequestHandler):
             "/api/compras",
         ]
 
-        if perfil == "Vendedor":
+        if perfil == "VENDEDOR":
             if method == "GET":
                 return (
                     path in vendedor_get
@@ -286,7 +286,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                 return path.startswith("/api/entidades/")
             return False
 
-        if perfil == "Estoque":
+        if perfil == "ESTOQUE":
             if method == "GET":
                 return path in estoque_get
             if method == "POST":
@@ -295,7 +295,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                 return path.startswith("/api/produtos/")
             return False
 
-        if perfil == "Financeiro":
+        if perfil == "FINANCEIRO":
             if method == "GET":
                 return path in financeiro_get
             return False
@@ -969,7 +969,7 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "numero_pedido": data.get("numero_pedido") or None,
                     "nf_entrada": data.get("nf_entrada") or None,
                     "forma_pagamento": data.get("forma_pagamento") or None,
-                    "status": "pendente",
+                    "status": "ABERTO",
                     "desconto": desconto,
                     "total": total,
                 }
@@ -1156,12 +1156,18 @@ class BackendHandler(BaseHTTPRequestHandler):
                 venda_id = venda.data[0]["id"]
 
                 conta_receber_payload = {
-                    "venda_id": venda_id,
-                    "cliente_id": cliente_id,
+                    "pedido_venda_id": venda_id,
+                    "entidade_id": cliente_id,
                     "descricao": f"Venda #{venda_id}",
-                    "valor": total,
+                    "numero_documento": f"VENDA-{venda_id}",
+                    "data_emissao": date.today().isoformat(),
                     "data_vencimento": self.normalizar_data_vencimento(data),
+                    "valor_original": total,
+                    "valor_recebido": 0,
                     "status": "PENDENTE",
+                    "forma_recebimento": data.get("forma_pagamento") or None,
+                    "observacoes": "Gerado automaticamente pela venda.",
+                    "estornado": False,
                 }
 
                 supabase.table("contas_receber").insert(conta_receber_payload).execute()
@@ -1211,27 +1217,72 @@ class BackendHandler(BaseHTTPRequestHandler):
                 user_id = str(data.get("user_id") or "").strip()
                 perfil_nome = str(data.get("perfil") or "").strip().upper()
 
+                logger.info(f"[usuarios/perfil] BODY recebido: {data}")
+                logger.info(f"[usuarios/perfil] user_id={user_id} perfil={perfil_nome}")
+
                 if not user_id or not perfil_nome:
-                    return self.send_error_json("User ID e perfil são obrigatórios.")
+                    return self.send_error_json("User ID e perfil são obrigatórios.", 400)
 
-                if perfil_nome not in ["ADMIN", "VENDEDOR", "FINANCEIRO", "ESTOQUE"]:
-                    return self.send_error_json("Perfil inválido. Use ADMIN, VENDEDOR, FINANCEIRO ou ESTOQUE.")
+                # Aqui precisa ser o ID UUID do Supabase Auth, não e-mail.
+                if "@" in user_id:
+                    return self.send_error_json(
+                        "Use o ID do usuário do Supabase Auth, não o e-mail.",
+                        400
+                    )
 
+                perfis_validos = ["ADMIN", "VENDEDOR", "FINANCEIRO", "ESTOQUE", "ESTOQUISTA"]
+
+                if perfil_nome not in perfis_validos:
+                    return self.send_error_json(
+                        "Perfil inválido. Use ADMIN, VENDEDOR, FINANCEIRO ou ESTOQUE.",
+                        400
+                    )
+
+                # Busca o perfil no banco.
+                # Se o Supabase retornar 200 porém data vazia por causa de RLS,
+                # usamos fallback pelos IDs que você mostrou na tabela.
                 perfil_res = (
                     supabase.table("perfis_acesso")
-                    .select("id")
+                    .select("id,nome")
                     .eq("nome", perfil_nome)
                     .limit(1)
                     .execute()
                 )
 
-                if not perfil_res.data:
+                logger.info(f"[usuarios/perfil] perfil_res.data={perfil_res.data}")
+
+                perfil_id = None
+
+                if perfil_res.data:
+                    perfil_id = perfil_res.data[0].get("id")
+                else:
+                    perfil_id_fallback = {
+                        "ADMIN": 1,
+                        "VENDEDOR": 2,
+                        "ESTOQUISTA": 3,
+                        "FINANCEIRO": 4,
+                        "ESTOQUE": 7,
+                    }
+                    perfil_id = perfil_id_fallback.get(perfil_nome)
+                    logger.warning(
+                        f"[usuarios/perfil] Perfil não veio pela API. "
+                        f"Usando fallback perfil_id={perfil_id} para {perfil_nome}."
+                    )
+
+                if not perfil_id:
                     return self.send_error_json("Perfil não encontrado no banco.", 404)
 
-                perfil_id = perfil_res.data[0]["id"]
+                # Desativa vínculos antigos do usuário
+                update_res = (
+                    supabase.table("usuarios_perfis")
+                    .update({"ativo": False})
+                    .eq("user_id", user_id)
+                    .execute()
+                )
 
-                supabase.table("usuarios_perfis").update({"ativo": False}).eq("user_id", user_id).execute()
+                logger.info(f"[usuarios/perfil] update_res.data={update_res.data}")
 
+                # Cria novo vínculo ativo
                 novo = (
                     supabase.table("usuarios_perfis")
                     .insert({
@@ -1242,9 +1293,17 @@ class BackendHandler(BaseHTTPRequestHandler):
                     .execute()
                 )
 
+                logger.info(f"[usuarios/perfil] insert_res.data={novo.data}")
+
+                if not novo.data:
+                    return self.send_error_json(
+                        "O Supabase não retornou o vínculo criado. Verifique RLS/Policies da tabela usuarios_perfis.",
+                        500
+                    )
+
                 self.send_json({
                     "message": "Perfil vinculado com sucesso.",
-                    "usuario_perfil": novo.data[0] if novo.data else None
+                    "usuario_perfil": novo.data[0]
                 }, 201)
 
             else:
