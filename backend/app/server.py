@@ -19,9 +19,21 @@ FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 def parse_decimal(value, default: str = "0") -> float:
-    raw = str(value or "").strip().replace(".", "").replace(",", ".")
-    if not raw:
-        raw = default
+    if value is None or value == "":
+        value = default
+
+    raw = str(value).strip()
+
+    # Formato brasileiro: 3.990,00
+    if "," in raw and "." in raw:
+        raw = raw.replace(".", "").replace(",", ".")
+
+    # Formato brasileiro simples: 3990,00
+    elif "," in raw:
+        raw = raw.replace(",", ".")
+
+    # Formato americano/Supabase: 3990.00
+    # mantém como está
     try:
         return float(Decimal(raw))
     except (InvalidOperation, ValueError):
@@ -323,6 +335,49 @@ class BackendHandler(BaseHTTPRequestHandler):
         res = supabase.table("produtos").select("*").eq("id", produto_id).execute()
         return res.data[0] if res.data else None
 
+    def anexar_produtos_aos_itens_venda(self, itens):
+        """
+        Evita erro PGRST200 do Supabase/PostgREST quando ainda não existe
+        relacionamento FK no schema cache entre itens_venda.produto_id e produtos.id.
+        Em vez de usar .select("*, produto:produto_id(*)"), busca os produtos
+        manualmente e anexa no campo produto.
+        """
+        itens = itens or []
+
+        produto_ids = []
+        for item in itens:
+            produto_id = item.get("produto_id")
+            if produto_id not in [None, "", 0, "0"]:
+                produto_ids.append(produto_id)
+
+        produto_ids = list(dict.fromkeys(produto_ids))
+
+        if not produto_ids:
+            return itens
+
+        try:
+            produtos_res = (
+                supabase.table("produtos")
+                .select("*")
+                .in_("id", produto_ids)
+                .execute()
+            )
+
+            produtos_por_id = {
+                str(produto.get("id")): produto
+                for produto in produtos_res.data or []
+            }
+
+            for item in itens:
+                item["produto"] = produtos_por_id.get(str(item.get("produto_id")), {})
+
+        except Exception as e:
+            logger.error(f"Erro ao anexar produtos aos itens da venda: {e}")
+            for item in itens:
+                item["produto"] = {}
+
+        return itens
+
     def atualizar_produto_estoque(self, produto_id, novo_estoque, novo_custo_medio=None):
         payload = {
             "estoque_atual": round(float(novo_estoque), 3)
@@ -592,15 +647,17 @@ class BackendHandler(BaseHTTPRequestHandler):
             elif path == "/api/lucratividade":
                 itens_res = (
                     supabase.table("itens_venda")
-                    .select("*, produto:produto_id(*)")
+                    .select("*")
                     .execute()
                 )
+
+                itens_venda = self.anexar_produtos_aos_itens_venda(itens_res.data or [])
 
                 linhas = []
                 receita_total = 0
                 custo_total = 0
 
-                for item in itens_res.data or []:
+                for item in itens_venda:
                     quantidade = parse_decimal(item.get("quantidade", 0))
                     preco = money(item.get("preco_unitario", 0))
                     custo = money(item.get("custo_unitario", 0))
@@ -748,20 +805,21 @@ class BackendHandler(BaseHTTPRequestHandler):
                     .eq("id", venda_id)
                     .execute()
                 )
+                if not venda.data:
+                    return self.send_error_json("Venda não encontrada.", 404)
 
                 itens = (
                     supabase.table("itens_venda")
-                    .select("*, produto:produto_id(*)")
+                    .select("*")
                     .eq("venda_id", venda_id)
                     .execute()
                 )
 
-                if not venda.data:
-                    return self.send_error_json("Venda não encontrada.", 404)
+                itens_com_produto = self.anexar_produtos_aos_itens_venda(itens.data or [])
 
                 self.send_json({
                     "venda": venda.data[0],
-                    "itens": itens.data
+                    "itens": itens_com_produto
                 })
 
             else:
@@ -979,11 +1037,16 @@ class BackendHandler(BaseHTTPRequestHandler):
 
                 conta_pagar_payload = {
                     "compra_id": compra_id,
+                    "entidade_id": fornecedor_id,
                     "fornecedor_id": fornecedor_id,
                     "descricao": f"Compra #{compra_id}",
                     "valor": total,
+                    "valor_original": total,
+                    "valor_pago": 0,
+                    "data_emissao": date.today().isoformat(),
                     "data_vencimento": self.normalizar_data_vencimento(data),
-                    "status": "PENDENTE",
+                    "status": "ABERTO",
+                    "estornado": False,
                 }
 
                 supabase.table("contas_pagar").insert(conta_pagar_payload).execute()
@@ -1156,7 +1219,6 @@ class BackendHandler(BaseHTTPRequestHandler):
                 venda_id = venda.data[0]["id"]
 
                 conta_receber_payload = {
-                    "pedido_venda_id": venda_id,
                     "entidade_id": cliente_id,
                     "descricao": f"Venda #{venda_id}",
                     "numero_documento": f"VENDA-{venda_id}",
@@ -1164,9 +1226,9 @@ class BackendHandler(BaseHTTPRequestHandler):
                     "data_vencimento": self.normalizar_data_vencimento(data),
                     "valor_original": total,
                     "valor_recebido": 0,
-                    "status": "PENDENTE",
+                    "status": "ABERTO",
                     "forma_recebimento": data.get("forma_pagamento") or None,
-                    "observacoes": "Gerado automaticamente pela venda.",
+                    "observacoes": f"Gerado automaticamente pela venda #{venda_id}.",
                     "estornado": False,
                 }
 
