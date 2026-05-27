@@ -5,9 +5,9 @@ function formatarMoeda(valor) {
   });
 }
 
-function linhaBalanco(grupo, conta, valor) {
+function linhaBalanco(grupo, conta, valor, classe = "") {
   return `
-    <tr>
+    <tr class="${classe}">
       <td><strong>${grupo}</strong></td>
       <td>${conta}</td>
       <td><strong>${formatarMoeda(valor)}</strong></td>
@@ -26,10 +26,18 @@ async function carregarBalanco() {
     const ativo = Number(balanco.ativo || 0);
     const passivo = Number(balanco.passivo || 0);
     const patrimonio = Number(balanco.patrimonio_liquido || 0);
+
     const estoque = Number(balanco.estoque || 0);
     const contasReceber = Number(balanco.contas_receber || 0);
-    const contasPagar = Number(balanco.contas_pagar || 0);
     const caixa = Number(balanco.caixa_estimado || 0);
+
+    const passivoCirculante = Number(
+      balanco.passivo_circulante ?? balanco.contas_pagar ?? 0
+    );
+
+    const passivoNaoCirculante = Number(
+      balanco.passivo_nao_circulante || 0
+    );
 
     document.getElementById("ativo-total").textContent = formatarMoeda(ativo);
     document.getElementById("passivo-total").textContent = formatarMoeda(passivo);
@@ -39,14 +47,15 @@ async function carregarBalanco() {
       linhaBalanco("Ativo Circulante", "Caixa estimado", caixa),
       linhaBalanco("Ativo Circulante", "Contas a Receber", contasReceber),
       linhaBalanco("Ativo Circulante", "Estoque", estoque),
-      linhaBalanco("Total", "Total do Ativo", ativo)
+      linhaBalanco("Total", "Total do Ativo", ativo, "linha-total")
     ].join("");
 
     document.getElementById("passivo-tbody").innerHTML = [
-      linhaBalanco("Passivo Circulante", "Contas a Pagar", contasPagar),
-      linhaBalanco("Total", "Total do Passivo", passivo),
+      linhaBalanco("Passivo Circulante", "Contas a Pagar", passivoCirculante),
+      linhaBalanco("Passivo Não Circulante", "Obrigações de longo prazo", passivoNaoCirculante),
+      linhaBalanco("Total", "Total do Passivo", passivo, "linha-total"),
       linhaBalanco("Patrimônio Líquido", "Resultado acumulado", patrimonio),
-      linhaBalanco("Total", "Passivo + Patrimônio Líquido", passivo + patrimonio)
+      linhaBalanco("Total", "Passivo + Patrimônio Líquido", passivo + patrimonio, "linha-total")
     ].join("");
 
     const diferenca = ativo - (passivo + patrimonio);

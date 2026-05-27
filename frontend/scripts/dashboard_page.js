@@ -1,3 +1,5 @@
+let charts = {};
+
 function aplicarPermissoes(perfilRecebido) {
   const perfil = String(perfilRecebido || "Vendedor").toUpperCase();
 
@@ -7,9 +9,7 @@ function aplicarPermissoes(perfilRecebido) {
   const linkCompras = document.querySelector('a[href="/pages/compras"]');
   const linkVendas = document.querySelector('a[href="/pages/vendas"]');
 
-  if (perfil === "ADMIN") {
-    return;
-  }
+  if (perfil === "ADMIN") return;
 
   if (perfil === "VENDEDOR") {
     if (financeiro) financeiro.style.display = "none";
@@ -32,15 +32,39 @@ function aplicarPermissoes(perfilRecebido) {
   }
 }
 
+function formatarMoeda(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
+}
+
+function formatarNumero(valor) {
+  return Number(valor || 0).toLocaleString("pt-BR");
+}
+
+function setTexto(id, valor) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = valor;
+}
+
+function syncUserFields() {
+  const nameElement = document.getElementById("user-name");
+  const roleElement = document.getElementById("user-role");
+  const inlineName = document.getElementById("user-name-inline");
+  const inlineRole = document.getElementById("user-role-inline");
+
+  if (inlineName) inlineName.textContent = nameElement?.textContent?.trim() || "usuário";
+  if (inlineRole) inlineRole.textContent = roleElement?.textContent?.trim() || "-";
+}
+
 async function carregarDashboard() {
   const nomeEl = document.getElementById("user-name");
   const perfilEl = document.getElementById("user-role");
   const statusEl = document.getElementById("dashboard-status");
 
   try {
-    if (statusEl) {
-      statusEl.textContent = "Carregando perfil...";
-    }
+    if (statusEl) statusEl.textContent = "Carregando perfil...";
 
     const resposta = await API.get("/api/me");
 
@@ -49,24 +73,44 @@ async function carregarDashboard() {
       return;
     }
 
-    if (nomeEl) {
-      nomeEl.textContent = resposta.user.email || resposta.user.nome || "-";
-    }
-
-    if (perfilEl) {
-      perfilEl.textContent = resposta.user.perfil || "Vendedor";
-    }
+    if (nomeEl) nomeEl.textContent = resposta.user.email || resposta.user.nome || "-";
+    if (perfilEl) perfilEl.textContent = resposta.user.perfil || "Vendedor";
 
     aplicarPermissoes(resposta.user.perfil);
-
-    if (statusEl) {
-      statusEl.textContent = "";
-    }
-
     syncUserFields();
+
+    if (statusEl) statusEl.textContent = "Carregando indicadores...";
+
+    await carregarResumoDashboard();
+
+    if (statusEl) statusEl.textContent = "";
   } catch (error) {
     console.error(error);
     window.location.href = "/pages/login";
+  }
+}
+
+async function carregarResumoDashboard() {
+  try {
+    const dados = await API.get("/api/dashboard/resumo");
+
+    setTexto("card-vendas-mes", formatarMoeda(dados.vendas_mes));
+    setTexto("card-compras-mes", formatarMoeda(dados.compras_mes));
+    setTexto("card-saldo-estimado", formatarMoeda(dados.saldo_estimado));
+    setTexto("card-lucro", formatarMoeda(dados.lucro_estimado));
+    setTexto("card-contas-receber", formatarMoeda(dados.contas_receber));
+    setTexto("card-contas-pagar", formatarMoeda(dados.contas_pagar));
+    setTexto("card-produtos-estoque", formatarNumero(dados.produtos_estoque));
+    setTexto("card-produtos-vendidos", formatarNumero(dados.produtos_vendidos));
+    setTexto("card-baixo-estoque", formatarNumero(dados.baixo_estoque));
+    setTexto("card-ticket-medio", formatarMoeda(dados.ticket_medio));
+    setTexto("card-impostos", formatarMoeda(dados.impostos_mes));
+    setTexto("card-margem", `${Number(dados.margem_lucro || 0).toFixed(2)}%`);
+
+    criarGraficosDashboard(dados);
+  } catch (error) {
+    console.error("Erro ao carregar /api/dashboard/resumo:", error);
+    criarGraficosDashboard(null);
   }
 }
 
@@ -82,307 +126,365 @@ async function fazerLogout(event) {
   }
 }
 
-function syncUserFields() {
-  const nameElement = document.getElementById("user-name");
-  const roleElement = document.getElementById("user-role");
-  const inlineName = document.getElementById("user-name-inline");
-  const inlineRole = document.getElementById("user-role-inline");
-
-  if (inlineName) {
-    inlineName.textContent = nameElement?.textContent?.trim() || "usuário";
-  }
-
-  if (inlineRole) {
-    inlineRole.textContent = roleElement?.textContent?.trim() || "-";
+function destruirGrafico(nome) {
+  if (charts[nome]) {
+    charts[nome].destroy();
+    charts[nome] = null;
   }
 }
 
-function criarGraficosDashboard() {
+function criarChart(nome, canvasId, config) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === "undefined") return;
+
+  destruirGrafico(nome);
+  charts[nome] = new Chart(canvas, config);
+}
+
+function criarGraficosDashboard(dados) {
   if (typeof Chart === "undefined") return;
 
   Chart.defaults.font.family =
     "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   Chart.defaults.color = "#64748b";
 
-  const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
+  const fallback = criarFallback();
+  const d = dados || fallback;
 
-  const chartVendasCompras = document.getElementById("chartVendasCompras");
-  if (chartVendasCompras) {
-    new Chart(chartVendasCompras, {
-      type: "line",
-      data: {
-        labels: meses,
-        datasets: [
-          {
-            label: "Vendas",
-            data: [8500, 12300, 9800, 15100, 17400, 18450],
-            borderColor: "#2563eb",
-            backgroundColor: "rgba(37, 99, 235, 0.12)",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7
-          },
-          {
-            label: "Compras",
-            data: [5200, 7800, 6900, 8900, 9300, 9820],
-            borderColor: "#16a34a",
-            backgroundColor: "rgba(22, 163, 74, 0.10)",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7
-          }
-        ]
+  const moneyTick = value => "R$ " + Number(value || 0).toLocaleString("pt-BR");
+
+  const baseOptionsMoney = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: { usePointStyle: true, padding: 18 }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: { callback: moneyTick },
+        grid: { color: "rgba(148, 163, 184, 0.18)" }
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              usePointStyle: true,
-              padding: 18
-            }
-          }
+      x: { grid: { display: false } }
+    }
+  };
+
+  const baseOptionsQtd = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: { usePointStyle: true, padding: 18 }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: { color: "rgba(148, 163, 184, 0.18)" }
+      },
+      x: { grid: { display: false } }
+    }
+  };
+
+  criarChart("vendasCompras", "chartVendasCompras", {
+    type: "line",
+    data: {
+      labels: d.grafico_vendas_compras?.labels || [],
+      datasets: [
+        {
+          label: "Vendas",
+          data: d.grafico_vendas_compras?.vendas || [],
+          borderColor: "#2563eb",
+          backgroundColor: "rgba(37, 99, 235, 0.12)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => "R$ " + value.toLocaleString("pt-BR")
-            },
-            grid: {
-              color: "rgba(148, 163, 184, 0.18)"
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            }
-          }
+        {
+          label: "Compras",
+          data: d.grafico_vendas_compras?.compras || [],
+          borderColor: "#16a34a",
+          backgroundColor: "rgba(22, 163, 74, 0.10)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }
+      ]
+    },
+    options: baseOptionsMoney
+  });
+
+  criarChart("estoque", "chartEstoque", {
+    type: "doughnut",
+    data: {
+      labels: d.grafico_estoque_categoria?.labels || [],
+      datasets: [
+        {
+          data: d.grafico_estoque_categoria?.valores || [],
+          backgroundColor: ["#2563eb", "#60a5fa", "#93c5fd", "#bfdbfe", "#7c3aed"],
+          borderColor: "#ffffff",
+          borderWidth: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: "68%",
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { usePointStyle: true, padding: 16 }
         }
       }
-    });
-  }
+    }
+  });
 
-  const chartEstoque = document.getElementById("chartEstoque");
-  if (chartEstoque) {
-    new Chart(chartEstoque, {
-      type: "doughnut",
-      data: {
-        labels: ["Eletrônicos", "Acessórios", "Peças", "Serviços"],
-        datasets: [
-          {
-            data: [95, 72, 54, 27],
-            backgroundColor: ["#2563eb", "#60a5fa", "#93c5fd", "#bfdbfe"],
-            borderColor: "#ffffff",
-            borderWidth: 4
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: "68%",
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              usePointStyle: true,
-              padding: 16
-            }
-          }
+  criarChart("financeiro", "chartFinanceiro", {
+    type: "bar",
+    data: {
+      labels: d.grafico_financeiro?.labels || ["Entradas", "Saídas", "Saldo"],
+      datasets: [
+        {
+          label: "Financeiro",
+          data: d.grafico_financeiro?.valores || [],
+          backgroundColor: ["#2563eb", "#ef4444", "#16a34a"],
+          borderRadius: 14
         }
-      }
-    });
-  }
+      ]
+    },
+    options: {
+      ...baseOptionsMoney,
+      plugins: { legend: { display: false } }
+    }
+  });
 
-  const chartFinanceiro = document.getElementById("chartFinanceiro");
-  if (chartFinanceiro) {
-    new Chart(chartFinanceiro, {
-      type: "bar",
-      data: {
-        labels: ["Entradas", "Saídas", "Saldo"],
-        datasets: [
-          {
-            label: "Financeiro",
-            data: [18450, 9820, 8630],
-            backgroundColor: ["#2563eb", "#ef4444", "#16a34a"],
-            borderRadius: 14
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
+  criarChart("movimentacoes", "chartMovimentacoes", {
+    type: "bar",
+    data: {
+      labels: d.grafico_movimentacoes?.labels || [],
+      datasets: [
+        {
+          label: "Entradas",
+          data: d.grafico_movimentacoes?.entradas || [],
+          backgroundColor: "#2563eb",
+          borderRadius: 12
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => "R$ " + value.toLocaleString("pt-BR")
-            },
-            grid: {
-              color: "rgba(148, 163, 184, 0.18)"
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            }
-          }
+        {
+          label: "Saídas",
+          data: d.grafico_movimentacoes?.saidas || [],
+          backgroundColor: "#93c5fd",
+          borderRadius: 12
         }
-      }
-    });
-  }
+      ]
+    },
+    options: baseOptionsQtd
+  });
 
-  const chartMovimentacoes = document.getElementById("chartMovimentacoes");
-  if (chartMovimentacoes) {
-    new Chart(chartMovimentacoes, {
-      type: "bar",
-      data: {
-        labels: meses,
-        datasets: [
-          {
-            label: "Entradas",
-            data: [42, 58, 47, 64, 71, 80],
-            backgroundColor: "#2563eb",
-            borderRadius: 12
-          },
-          {
-            label: "Saídas",
-            data: [30, 45, 39, 50, 63, 69],
-            backgroundColor: "#93c5fd",
-            borderRadius: 12
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              usePointStyle: true,
-              padding: 18
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: "rgba(148, 163, 184, 0.18)"
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            }
-          }
+  criarChart("lucro", "chartLucro", {
+    type: "line",
+    data: {
+      labels: d.grafico_lucro?.labels || [],
+      datasets: [
+        {
+          label: "Lucro estimado",
+          data: d.grafico_lucro?.valores || [],
+          borderColor: "#7c3aed",
+          backgroundColor: "rgba(124, 58, 237, 0.12)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7
         }
-      }
-    });
-  }
+      ]
+    },
+    options: baseOptionsMoney
+  });
 
-  const chartLucro = document.getElementById("chartLucro");
-  if (chartLucro) {
-    new Chart(chartLucro, {
-      type: "line",
-      data: {
-        labels: meses,
-        datasets: [
-          {
-            label: "Lucro estimado",
-            data: [3300, 4500, 2900, 6200, 8100, 8630],
-            borderColor: "#7c3aed",
-            backgroundColor: "rgba(124, 58, 237, 0.12)",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 5,
-            pointHoverRadius: 7
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              usePointStyle: true,
-              padding: 18
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => "R$ " + value.toLocaleString("pt-BR")
-            },
-            grid: {
-              color: "rgba(148, 163, 184, 0.18)"
-            }
-          },
-          x: {
-            grid: {
-              display: false
-            }
-          }
+  criarChart("produtosVendidos", "chartProdutosVendidos", {
+    type: "bar",
+    data: {
+      labels: d.grafico_produtos_vendidos?.labels || [],
+      datasets: [
+        {
+          label: "Quantidade vendida",
+          data: d.grafico_produtos_vendidos?.valores || [],
+          backgroundColor: ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"],
+          borderRadius: 14
         }
+      ]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grid: { color: "rgba(148, 163, 184, 0.18)" }
+        },
+        y: { grid: { display: false } }
       }
-    });
-  }
+    }
+  });
 
-  const chartProdutosVendidos = document.getElementById("chartProdutosVendidos");
-  if (chartProdutosVendidos) {
-    new Chart(chartProdutosVendidos, {
-      type: "bar",
-      data: {
-        labels: ["Produto 01", "Produto 02", "Produto 03", "Produto 04"],
-        datasets: [
-          {
-            label: "Quantidade vendida",
-            data: [86, 64, 52, 38],
-            backgroundColor: ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"],
-            borderRadius: 14
-          }
-        ]
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          x: {
-            beginAtZero: true,
-            grid: {
-              color: "rgba(148, 163, 184, 0.18)"
-            }
-          },
-          y: {
-            grid: {
-              display: false
-            }
-          }
+  criarChart("contas", "chartContas", {
+    type: "bar",
+    data: {
+      labels: d.grafico_contas?.labels || ["Receber", "Pagar"],
+      datasets: [
+        {
+          label: "Contas",
+          data: d.grafico_contas?.valores || [],
+          backgroundColor: ["#2563eb", "#ef4444"],
+          borderRadius: 14
+        }
+      ]
+    },
+    options: {
+      ...baseOptionsMoney,
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  criarChart("impostos", "chartImpostos", {
+    type: "line",
+    data: {
+      labels: d.grafico_impostos?.labels || [],
+      datasets: [
+        {
+          label: "Impostos",
+          data: d.grafico_impostos?.valores || [],
+          borderColor: "#f59e0b",
+          backgroundColor: "rgba(245, 158, 11, 0.15)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }
+      ]
+    },
+    options: baseOptionsMoney
+  });
+
+  criarChart("pagamento", "chartPagamento", {
+    type: "pie",
+    data: {
+      labels: d.grafico_pagamento?.labels || [],
+      datasets: [
+        {
+          data: d.grafico_pagamento?.valores || [],
+          backgroundColor: ["#2563eb", "#16a34a", "#f59e0b", "#7c3aed"],
+          borderColor: "#ffffff",
+          borderWidth: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { usePointStyle: true, padding: 16 }
         }
       }
-    });
-  }
+    }
+  });
+
+  criarChart("saldo", "chartSaldo", {
+    type: "line",
+    data: {
+      labels: d.grafico_saldo?.labels || [],
+      datasets: [
+        {
+          label: "Saldo",
+          data: d.grafico_saldo?.valores || [],
+          borderColor: "#16a34a",
+          backgroundColor: "rgba(22, 163, 74, 0.15)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }
+      ]
+    },
+    options: baseOptionsMoney
+  });
+
+  criarChart("baixoEstoque", "chartBaixoEstoque", {
+    type: "bar",
+    data: {
+      labels: d.grafico_baixo_estoque?.labels || [],
+      datasets: [
+        {
+          label: "Estoque atual",
+          data: d.grafico_baixo_estoque?.valores || [],
+          backgroundColor: "#ef4444",
+          borderRadius: 12
+        }
+      ]
+    },
+    options: baseOptionsQtd
+  });
+}
+
+function criarFallback() {
+  return {
+    grafico_vendas_compras: {
+      labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      vendas: [0, 0, 0, 0, 0, 0],
+      compras: [0, 0, 0, 0, 0, 0]
+    },
+    grafico_financeiro: {
+      labels: ["Entradas", "Saídas", "Saldo"],
+      valores: [0, 0, 0]
+    },
+    grafico_movimentacoes: {
+      labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      entradas: [0, 0, 0, 0, 0, 0],
+      saidas: [0, 0, 0, 0, 0, 0]
+    },
+    grafico_estoque_categoria: {
+      labels: ["Sem dados"],
+      valores: [1]
+    },
+    grafico_lucro: {
+      labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      valores: [0, 0, 0, 0, 0, 0]
+    },
+    grafico_produtos_vendidos: {
+      labels: ["Sem vendas"],
+      valores: [0]
+    },
+    grafico_contas: {
+      labels: ["Receber", "Pagar"],
+      valores: [0, 0]
+    },
+    grafico_impostos: {
+      labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      valores: [0, 0, 0, 0, 0, 0]
+    },
+    grafico_pagamento: {
+      labels: ["Sem dados"],
+      valores: [1]
+    },
+    grafico_saldo: {
+      labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      valores: [0, 0, 0, 0, 0, 0]
+    },
+    grafico_baixo_estoque: {
+      labels: ["Sem dados"],
+      valores: [0]
+    }
+  };
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -393,7 +495,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   carregarDashboard();
-  criarGraficosDashboard();
 
   const userNameNode = document.getElementById("user-name");
   const userRoleNode = document.getElementById("user-role");

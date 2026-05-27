@@ -15,6 +15,7 @@
   <aside class="sidebar">
     <div class="sidebar-brand sidebar-brand-row">
       <div class="sidebar-logo">⬡</div>
+
       <div>
         <strong>Micro ERP</strong>
         <span>Painel de Gestão</span>
@@ -85,72 +86,120 @@
   </aside>
 
   <main class="dashboard-container dashboard-with-sidebar">
-    <section class="hero-card">
-      <div class="hero-content">
-        <div>
-          <span class="hero-badge">Dashboard</span>
-          <h1>Painel principal do Micro ERP</h1>
+    <section class="dashboard-header">
+      <div>
+        <h1>Olá, Admin 👋</h1>
+        <p>Aqui está o resumo geral da sua empresa.</p>
 
-          <p class="hero-description">
-            Bem-vindo, <strong><span id="user-name-inline">usuário</span></strong>.
-            Perfil atual: <strong><span id="user-role-inline">-</span></strong>.
-          </p>
-        </div>
-
-        <p id="dashboard-status" class="dashboard-status"></p>
+        <p class="hero-description hidden-user-info">
+          Bem-vindo,
+          <strong><span id="user-name-inline">usuário</span></strong>.
+          Perfil atual:
+          <strong><span id="user-role-inline">-</span></strong>.
+        </p>
       </div>
+
+      <div class="dashboard-actions">
+        <button type="button">📅 01/06/2026 - 30/06/2026</button>
+        <button type="button">⌕ Filtros</button>
+
+        <div class="updated-box">
+          <span>Atualizado em</span>
+          <strong>26/05/2026 16:10</strong>
+        </div>
+      </div>
+
+      <p id="dashboard-status" class="dashboard-status"></p>
     </section>
 
     <section class="analytics-section">
-      <div class="section-header">
-        <div>
-          <span class="hero-badge">Indicadores</span>
-          <h2>Resumo geral</h2>
-          <p>Vendas, compras, estoque, financeiro e movimentações.</p>
+
+      <!-- CARDS PRINCIPAIS -->
+      <div class="top-cards-grid">
+        <div class="main-stat-card blue">
+          <div>
+            <span>Vendas do mês</span>
+            <strong id="card-vendas-mes">R$ 18.450,00</strong>
+            <p class="positive">↑ 12% vs mês anterior</p>
+          </div>
+          <div class="card-icon">🛒</div>
+        </div>
+
+        <div class="main-stat-card green">
+          <div>
+            <span>Compras do mês</span>
+            <strong id="card-compras-mes">R$ 9.820,00</strong>
+            <p class="negative">↓ 4% vs mês anterior</p>
+          </div>
+          <div class="card-icon">▣</div>
+        </div>
+
+        <div class="main-stat-card purple">
+          <div>
+            <span>Saldo estimado</span>
+            <strong id="card-saldo-estimado">R$ 8.630,00</strong>
+            <p>Entradas - Saídas</p>
+          </div>
+          <div class="card-icon">$</div>
+        </div>
+
+        <div class="main-stat-card orange">
+          <div>
+            <span>Lucro estimado</span>
+            <strong id="card-lucro">R$ 8.630,00</strong>
+            <p>↗ 47% margem de lucro</p>
+          </div>
+          <div class="card-icon">↗</div>
         </div>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span>Vendas do mês</span>
-          <strong>R$ 18.450,00</strong>
-          <p>+12% comparado ao mês anterior</p>
+      <!-- CARDS SECUNDÁRIOS -->
+      <div class="mini-cards-row">
+        <div class="mini-card">
+          <span>Contas a Receber</span>
+          <strong id="card-contas-receber">R$ 18.500,00</strong>
+          <div class="mini-icon green-icon">↟</div>
         </div>
 
-        <div class="stat-card">
-          <span>Compras do mês</span>
-          <strong>R$ 9.820,00</strong>
-          <p>Entradas registradas no período</p>
+        <div class="mini-card">
+          <span>Contas a Pagar</span>
+          <strong id="card-contas-pagar">R$ 9.200,00</strong>
+          <div class="mini-icon red-icon">↡</div>
         </div>
 
-        <div class="stat-card">
-          <span>Produtos em estoque</span>
-          <strong>248</strong>
-          <p>Itens cadastrados e ativos</p>
+        <div class="mini-card">
+          <span>Produtos em Estoque</span>
+          <strong id="card-produtos-estoque">248</strong>
+          <div class="mini-icon blue-icon">⬡</div>
         </div>
 
-        <div class="stat-card">
-          <span>Saldo estimado</span>
-          <strong>R$ 8.630,00</strong>
-          <p>Entradas menos saídas</p>
+        <div class="mini-card">
+          <span>Produtos Vendidos</span>
+          <strong id="card-produtos-vendidos">240</strong>
+          <div class="mini-icon purple-icon">▢</div>
+        </div>
+
+        <div class="mini-card">
+          <span>Baixo Estoque</span>
+          <strong id="card-baixo-estoque">12</strong>
+          <div class="mini-icon orange-icon">⚠</div>
+        </div>
+
+        <div class="mini-card">
+          <span>Ticket Médio</span>
+          <strong id="card-ticket-medio">R$ 420,00</strong>
+          <div class="mini-icon cyan-icon">▰</div>
         </div>
       </div>
 
-      <div class="charts-grid">
-        <div class="chart-card chart-large">
+      <!-- GRÁFICOS PRINCIPAIS -->
+      <div class="charts-grid clean-grid">
+        <div class="chart-card chart-wide">
           <div class="chart-header">
             <h3>Vendas x Compras</h3>
-            <p>Comparativo dos últimos meses</p>
+            <p>Comparativo dos últimos 6 meses</p>
           </div>
           <canvas id="chartVendasCompras"></canvas>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3>Estoque por categoria</h3>
-            <p>Distribuição dos produtos</p>
-          </div>
-          <canvas id="chartEstoque"></canvas>
         </div>
 
         <div class="chart-card">
@@ -161,9 +210,9 @@
           <canvas id="chartFinanceiro"></canvas>
         </div>
 
-        <div class="chart-card chart-large">
+        <div class="chart-card">
           <div class="chart-header">
-            <h3>Movimentações do estoque</h3>
+            <h3>Movimentações do Estoque</h3>
             <p>Entradas e saídas por mês</p>
           </div>
           <canvas id="chartMovimentacoes"></canvas>
@@ -171,24 +220,58 @@
 
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Lucro estimado</h3>
-            <p>Evolução mensal do resultado</p>
+            <h3>Estoque por Categoria</h3>
+            <p>Distribuição dos produtos</p>
+          </div>
+          <canvas id="chartEstoque"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Lucro Estimado</h3>
+            <p>Evolução mensal</p>
           </div>
           <canvas id="chartLucro"></canvas>
         </div>
 
         <div class="chart-card">
           <div class="chart-header">
-            <h3>Produtos mais vendidos</h3>
+            <h3>Produtos Mais Vendidos</h3>
             <p>Ranking de saída</p>
           </div>
           <canvas id="chartProdutosVendidos"></canvas>
         </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Contas a Pagar x Receber</h3>
+            <p>Comparativo financeiro</p>
+          </div>
+          <canvas id="chartContas"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Impostos do Mês</h3>
+            <p>Evolução tributária</p>
+          </div>
+          <canvas id="chartImpostos"></canvas>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Vendas por Pagamento</h3>
+            <p>Distribuição das vendas</p>
+          </div>
+          <canvas id="chartPagamento"></canvas>
+        </div>
       </div>
 
+      <!-- TABELAS -->
       <div class="tables-grid">
         <div class="table-card">
-          <h3>Últimas vendas</h3>
+          <h3>Últimas Vendas</h3>
+
           <table>
             <thead>
               <tr>
@@ -197,28 +280,40 @@
                 <th>Status</th>
               </tr>
             </thead>
+
             <tbody>
               <tr>
                 <td>Cliente A</td>
                 <td>R$ 1.250,00</td>
-                <td>Concluída</td>
+                <td><span class="status-pill ok">Concluída</span></td>
               </tr>
+
               <tr>
                 <td>Cliente B</td>
                 <td>R$ 890,00</td>
-                <td>Concluída</td>
+                <td><span class="status-pill ok">Concluída</span></td>
               </tr>
+
               <tr>
                 <td>Cliente C</td>
                 <td>R$ 2.100,00</td>
-                <td>Pendente</td>
+                <td><span class="status-pill warning">Pendente</span></td>
+              </tr>
+
+              <tr>
+                <td>Cliente D</td>
+                <td>R$ 560,00</td>
+                <td><span class="status-pill ok">Concluída</span></td>
               </tr>
             </tbody>
           </table>
+
+          <a class="table-link" href="/pages/vendas">Ver todas →</a>
         </div>
 
         <div class="table-card">
-          <h3>Produtos com baixo estoque</h3>
+          <h3>Produtos com Baixo Estoque</h3>
+
           <table>
             <thead>
               <tr>
@@ -227,28 +322,40 @@
                 <th>Mínimo</th>
               </tr>
             </thead>
+
             <tbody>
               <tr>
                 <td>Produto 01</td>
-                <td>4</td>
+                <td class="danger-text">4</td>
                 <td>10</td>
               </tr>
+
               <tr>
                 <td>Produto 02</td>
-                <td>7</td>
+                <td class="danger-text">7</td>
                 <td>15</td>
               </tr>
+
               <tr>
                 <td>Produto 03</td>
-                <td>2</td>
+                <td class="danger-text">2</td>
                 <td>8</td>
+              </tr>
+
+              <tr>
+                <td>Produto 04</td>
+                <td class="warning-text">9</td>
+                <td>12</td>
               </tr>
             </tbody>
           </table>
+
+          <a class="table-link" href="/pages/produtos">Ver todos →</a>
         </div>
 
         <div class="table-card">
-          <h3>Resumo financeiro</h3>
+          <h3>Resumo Financeiro</h3>
+
           <table>
             <thead>
               <tr>
@@ -257,28 +364,34 @@
                 <th>Percentual</th>
               </tr>
             </thead>
+
             <tbody>
               <tr>
-                <td>Entradas</td>
+                <td class="blue-text">Entradas</td>
                 <td>R$ 18.450,00</td>
-                <td>100%</td>
+                <td class="blue-text">100%</td>
               </tr>
+
               <tr>
-                <td>Saídas</td>
+                <td class="danger-text">Saídas</td>
                 <td>R$ 9.820,00</td>
-                <td>53%</td>
+                <td class="danger-text">53%</td>
               </tr>
+
               <tr>
-                <td>Saldo</td>
+                <td class="success-text">Saldo</td>
                 <td>R$ 8.630,00</td>
-                <td>47%</td>
+                <td class="success-text">47%</td>
               </tr>
             </tbody>
           </table>
+
+          <a class="table-link" href="/pages/fluxo-caixa">Ver detalhes →</a>
         </div>
 
         <div class="table-card">
-          <h3>Movimentações recentes</h3>
+          <h3>Movimentações Recentes</h3>
+
           <table>
             <thead>
               <tr>
@@ -287,24 +400,35 @@
                 <th>Quantidade</th>
               </tr>
             </thead>
+
             <tbody>
               <tr>
-                <td>18/05/2026</td>
-                <td>Entrada</td>
+                <td>26/05/2026</td>
+                <td><span class="status-pill ok">Entrada</span></td>
                 <td>32</td>
               </tr>
+
               <tr>
-                <td>17/05/2026</td>
-                <td>Saída</td>
+                <td>25/05/2026</td>
+                <td><span class="status-pill error">Saída</span></td>
                 <td>18</td>
               </tr>
+
               <tr>
-                <td>16/05/2026</td>
-                <td>Entrada</td>
+                <td>24/05/2026</td>
+                <td><span class="status-pill ok">Entrada</span></td>
                 <td>45</td>
+              </tr>
+
+              <tr>
+                <td>23/05/2026</td>
+                <td><span class="status-pill error">Saída</span></td>
+                <td>22</td>
               </tr>
             </tbody>
           </table>
+
+          <a class="table-link" href="/pages/produtos">Ver todas →</a>
         </div>
       </div>
     </section>

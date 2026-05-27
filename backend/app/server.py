@@ -250,6 +250,7 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         vendedor_get = [
             "/api/me",
+            "/api/dashboard/resumo",
             "/api/produtos",
             "/api/entidades",
             "/api/vendas",
@@ -263,6 +264,7 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         estoque_get = [
             "/api/me",
+            "/api/dashboard/resumo",
             "/api/produtos",
             "/api/compras",
             "/api/movimentacoes-estoque",
@@ -275,6 +277,7 @@ class BackendHandler(BaseHTTPRequestHandler):
 
         financeiro_get = [
             "/api/me",
+            "/api/dashboard/resumo",
             "/api/contas-receber",
             "/api/contas-pagar",
             "/api/fluxo-caixa",
@@ -435,6 +438,33 @@ class BackendHandler(BaseHTTPRequestHandler):
             return str(data_vencimento).split("T")[0]
         return date.today().isoformat()
 
+    def adicionar_meses(self, data_base, meses):
+        """
+        Soma meses a uma data sem usar bibliotecas externas.
+        Exemplo: 2026-01-31 + 1 mês vira 2026-02-28.
+        """
+        mes = data_base.month - 1 + meses
+        ano = data_base.year + mes // 12
+        mes = mes % 12 + 1
+
+        dias_mes = [
+            31,
+            29 if ano % 4 == 0 and (ano % 100 != 0 or ano % 400 == 0) else 28,
+            31,
+            30,
+            31,
+            30,
+            31,
+            31,
+            30,
+            31,
+            30,
+            31,
+        ]
+
+        dia = min(data_base.day, dias_mes[mes - 1])
+        return date(ano, mes, dia)
+
     def somar_valores(self, registros, campo="valor", apenas_pendente=False):
         total = 0
         for item in registros or []:
@@ -451,6 +481,390 @@ class BackendHandler(BaseHTTPRequestHandler):
             custo = money(item.get("custo_unitario", 0))
             cmv += quantidade * custo
         return round(cmv, 2)
+
+
+    def calcular_dashboard_resumo(self):
+        """
+        Monta os dados reais do Dashboard a partir do Supabase.
+        Esse endpoint alimenta cards, gráficos e tabelas do dashboard.
+        """
+        hoje = date.today()
+        inicio_mes = hoje.replace(day=1)
+        meses_nomes = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+
+        ultimos_meses = []
+        ano = hoje.year
+        mes = hoje.month
+
+        for i in range(5, -1, -1):
+            m = mes - i
+            a = ano
+
+            while m <= 0:
+                m += 12
+                a -= 1
+
+            ultimos_meses.append({
+                "ano": a,
+                "mes": m,
+                "label": meses_nomes[m - 1],
+                "prefixo": f"{a}-{m:02d}",
+            })
+
+        def data_prefixo(registro):
+            valor = (
+                registro.get("confirmado_em")
+                or registro.get("criado_em")
+                or registro.get("created_at")
+                or registro.get("data_emissao")
+                or registro.get("data")
+                or ""
+            )
+            return str(valor)[:7]
+
+        def esta_no_mes_atual(registro):
+            valor = (
+                registro.get("confirmado_em")
+                or registro.get("criado_em")
+                or registro.get("created_at")
+                or registro.get("data_emissao")
+                or registro.get("data")
+                or ""
+            )
+
+            if not valor:
+                return False
+            
+            return str(valor)[:7] == hoje.strftime("%Y-%m")
+
+        def status_normalizado(registro):
+            return str(registro.get("status") or "").strip().upper()
+
+        def nao_cancelado(registro):
+            return status_normalizado(registro) not in [
+                "CANCELADO",
+                "CANCELADA",
+                "ESTORNADO",
+                "ESTORNADA",
+            ]
+
+        def venda_valida(registro):
+            status = status_normalizado(registro)
+
+            if status in ["CANCELADO", "CANCELADA", "ESTORNADO", "ESTORNADA"]:
+                return False
+
+            # Seu sistema cria venda como finalizada.
+            # Também aceita vazio para não quebrar dados antigos.
+            return status in ["", "FINALIZADA", "CONCLUIDA", "CONCLUÍDA", "PAGA", "PAGO"]
+
+        def compra_valida(registro):
+            status = status_normalizado(registro)
+
+            if status in ["CANCELADO", "CANCELADA", "ESTORNADO", "ESTORNADA"]:
+                return False
+
+            # Seu sistema confirma compra como "confirmada".
+            # Também deixei ABERTO entrar para o dashboard não ficar zerado
+            # quando existir compra cadastrada mas ainda não confirmada.
+            return status in [
+                "CONFIRMADA",
+                "CONFIRMADO",
+                "CONCLUIDA",
+                "CONCLUÍDA",
+                "RECEBIDA",
+                "FINALIZADA",
+                "ABERTO",
+            ]
+
+        def pendente(registro):
+            status = status_normalizado(registro)
+            return status not in [
+                "PAGO",
+                "PAGA",
+                "QUITADO",
+                "QUITADA",
+                "RECEBIDO",
+                "RECEBIDA",
+                "CANCELADO",
+                "CANCELADA",
+                "ESTORNADO",
+                "ESTORNADA",
+            ]
+
+        def valor_registro(registro, *campos):
+            for campo in campos:
+                if campo in registro and registro.get(campo) not in [None, ""]:
+                    return money(registro.get(campo))
+            return 0
+
+        vendas_res = supabase.table("vendas").select("*").order("id", desc=True).execute()
+        compras_res = supabase.table("compras").select("*").order("id", desc=True).execute()
+        produtos_res = supabase.table("produtos").select("*").order("id", desc=True).execute()
+        contas_receber_res = supabase.table("contas_receber").select("*").order("id", desc=True).execute()
+        contas_pagar_res = supabase.table("contas_pagar").select("*").order("id", desc=True).execute()
+        itens_venda_res = supabase.table("itens_venda").select("*").execute()
+        movimentacoes_res = supabase.table("movimentacoes_estoque").select("*").order("id", desc=True).execute()
+
+        vendas = vendas_res.data or []
+        compras = compras_res.data or []
+        produtos = produtos_res.data or []
+        contas_receber = contas_receber_res.data or []
+        contas_pagar = contas_pagar_res.data or []
+        itens_venda = itens_venda_res.data or []
+        movimentacoes = movimentacoes_res.data or []
+
+        vendas_mes_lista = [v for v in vendas if venda_valida(v) and esta_no_mes_atual(v)]
+        compras_mes_lista = [c for c in compras if compra_valida(c) and esta_no_mes_atual(c)]
+
+        vendas_mes = round(sum(valor_registro(v, "total", "valor_total", "valor") for v in vendas_mes_lista), 2)
+        compras_mes = round(sum(valor_registro(c, "total", "valor_total", "valor") for c in compras_mes_lista), 2)
+
+        # Fallback: se a tabela compras não retornar valor por algum motivo,
+        # usa contas_pagar do mês, que é criada automaticamente ao cadastrar compra.
+        if compras_mes <= 0:
+            compras_mes = round(sum(
+                valor_registro(c, "valor_original", "valor")
+                for c in contas_pagar
+                if pendente(c) and esta_no_mes_atual(c)
+            ), 2)
+
+        vendas_mes_ids = {str(v.get("id")) for v in vendas_mes_lista}
+
+        produtos_estoque = round(sum(parse_decimal(p.get("estoque_atual", 0)) for p in produtos), 3)
+        baixo_estoque_lista = [
+            p for p in produtos
+            if parse_decimal(p.get("estoque_minimo", 0)) > 0
+            and parse_decimal(p.get("estoque_atual", 0)) <= parse_decimal(p.get("estoque_minimo", 0))
+        ]
+
+        produtos_vendidos = 0
+        cmv_mes = 0
+
+        ranking_produtos = {}
+
+        for item in itens_venda:
+            venda_id = str(item.get("venda_id") or "")
+
+            if venda_id and venda_id not in vendas_mes_ids:
+                continue
+
+            qtd = parse_decimal(item.get("quantidade", 0))
+            custo = money(item.get("custo_unitario", 0))
+            produtos_vendidos += qtd
+            cmv_mes += qtd * custo
+
+            produto_id = str(item.get("produto_id") or "")
+            if produto_id:
+                if produto_id not in ranking_produtos:
+                    ranking_produtos[produto_id] = 0
+                ranking_produtos[produto_id] += qtd
+
+        produtos_por_id = {str(p.get("id")): p for p in produtos}
+        ranking_ordenado = sorted(ranking_produtos.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        labels_produtos = []
+        valores_produtos = []
+
+        for produto_id, qtd in ranking_ordenado:
+            produto = produtos_por_id.get(produto_id, {})
+            labels_produtos.append(produto.get("nome") or f"Produto {produto_id}")
+            valores_produtos.append(round(qtd, 2))
+
+        total_receber = round(sum(valor_registro(c, "valor_original", "valor") for c in contas_receber if pendente(c)), 2)
+        total_pagar = round(sum(valor_registro(c, "valor_original", "valor") for c in contas_pagar if pendente(c)), 2)
+
+        impostos_mes = round(
+            sum(valor_registro(v, "imposto") for v in vendas_mes_lista),
+            2
+        )
+
+        if impostos_mes <= 0 and vendas_mes > 0:
+            impostos_mes = round(vendas_mes * 0.10, 2)
+
+        lucro_estimado = round(vendas_mes - cmv_mes - impostos_mes, 2)
+        saldo_estimado = round(vendas_mes - compras_mes, 2)
+        ticket_medio = round(vendas_mes / len(vendas_mes_lista), 2) if vendas_mes_lista else 0
+        margem_lucro = round((lucro_estimado / vendas_mes) * 100, 2) if vendas_mes > 0 else 0
+
+        vendas_por_mes = []
+        compras_por_mes = []
+        impostos_por_mes = []
+        saldo_por_mes = []
+        entradas_mov = []
+        saidas_mov = []
+
+        saldo_acumulado = 0
+
+        for mes_info in ultimos_meses:
+            prefixo = mes_info["prefixo"]
+
+            total_vendas_mes = round(sum(
+                valor_registro(v, "total", "valor_total", "valor")
+                for v in vendas
+                if venda_valida(v) and data_prefixo(v) == prefixo
+            ), 2)
+
+            total_compras_mes = round(sum(
+                valor_registro(c, "total", "valor_total", "valor")
+                for c in compras
+                if compra_valida(c) and data_prefixo(c) == prefixo
+            ), 2)
+
+            # Fallback mensal pelo contas_pagar, para não zerar o gráfico de compras.
+            if total_compras_mes <= 0:
+                total_compras_mes = round(sum(
+                    valor_registro(c, "valor_original", "valor")
+                    for c in contas_pagar
+                    if pendente(c) and data_prefixo(c) == prefixo
+                ), 2)
+
+            total_impostos_mes = round(sum(
+                valor_registro(v, "imposto")
+                for v in vendas
+                if venda_valida(v) and data_prefixo(v) == prefixo
+            ), 2)
+
+            if total_impostos_mes <= 0 and total_vendas_mes > 0:
+                total_impostos_mes = round(total_vendas_mes * 0.10, 2)
+
+            entradas = sum(
+                parse_decimal(m.get("quantidade", 0))
+                for m in movimentacoes
+                if str(m.get("tipo") or "").upper() == "ENTRADA" and data_prefixo(m) == prefixo
+            )
+
+            saidas = sum(
+                parse_decimal(m.get("quantidade", 0))
+                for m in movimentacoes
+                if str(m.get("tipo") or "").upper() == "SAIDA" and data_prefixo(m) == prefixo
+            )
+
+            saldo_acumulado += total_vendas_mes - total_compras_mes
+
+            vendas_por_mes.append(total_vendas_mes)
+            compras_por_mes.append(total_compras_mes)
+            impostos_por_mes.append(total_impostos_mes)
+            saldo_por_mes.append(round(saldo_acumulado, 2))
+            entradas_mov.append(round(entradas, 2))
+            saidas_mov.append(round(saidas, 2))
+
+        estoque_categoria = {}
+        for produto in produtos:
+            categoria = (
+                produto.get("categoria")
+                or produto.get("tipo")
+                or produto.get("unidade_medida")
+                or "Produtos"
+            )
+            estoque_categoria[categoria] = estoque_categoria.get(categoria, 0) + parse_decimal(produto.get("estoque_atual", 0))
+
+        labels_estoque = list(estoque_categoria.keys())[:6]
+        valores_estoque = [round(estoque_categoria[label], 2) for label in labels_estoque]
+
+        formas_pagamento = {}
+        for venda in vendas_mes_lista:
+            forma = venda.get("forma_pagamento") or venda.get("forma_recebimento") or "Não informado"
+            formas_pagamento[forma] = formas_pagamento.get(forma, 0) + valor_registro(venda, "total", "valor_total", "valor")
+
+        ultimas_vendas = []
+        for venda in vendas[:5]:
+            cliente_nome = "Cliente"
+            cliente_id = venda.get("cliente_id")
+
+            if cliente_id:
+                cliente_nome = f"Cliente #{cliente_id}"
+
+            ultimas_vendas.append({
+                "cliente": cliente_nome,
+                "valor": valor_registro(venda, "total", "valor_total", "valor"),
+                "status": venda.get("status") or "-",
+            })
+
+        movimentacoes_recentes = []
+        for mov in movimentacoes[:5]:
+            movimentacoes_recentes.append({
+                "data": mov.get("created_at") or mov.get("criado_em") or mov.get("data"),
+                "tipo": mov.get("tipo"),
+                "quantidade": parse_decimal(mov.get("quantidade", 0)),
+            })
+
+        baixo_estoque = []
+        for produto in baixo_estoque_lista[:5]:
+            baixo_estoque.append({
+                "nome": produto.get("nome") or f"Produto #{produto.get('id')}",
+                "estoque_atual": parse_decimal(produto.get("estoque_atual", 0)),
+                "estoque_minimo": parse_decimal(produto.get("estoque_minimo", 0)),
+            })
+
+        labels_baixo = [p["nome"] for p in baixo_estoque]
+        valores_baixo = [p["estoque_atual"] for p in baixo_estoque]
+
+        self.send_json({
+            "vendas_mes": vendas_mes,
+            "compras_mes": compras_mes,
+            "produtos_estoque": produtos_estoque,
+            "saldo_estimado": saldo_estimado,
+            "contas_receber": total_receber,
+            "contas_pagar": total_pagar,
+            "lucro_estimado": lucro_estimado,
+            "impostos_mes": impostos_mes,
+            "ticket_medio": ticket_medio,
+            "produtos_vendidos": round(produtos_vendidos, 2),
+            "baixo_estoque": len(baixo_estoque_lista),
+            "margem_lucro": margem_lucro,
+
+            "grafico_vendas_compras": {
+                "labels": [m["label"] for m in ultimos_meses],
+                "vendas": vendas_por_mes,
+                "compras": compras_por_mes,
+            },
+            "grafico_financeiro": {
+                "labels": ["Entradas", "Saídas", "Saldo"],
+                "valores": [vendas_mes, compras_mes, saldo_estimado],
+            },
+            "grafico_movimentacoes": {
+                "labels": [m["label"] for m in ultimos_meses],
+                "entradas": entradas_mov,
+                "saidas": saidas_mov,
+            },
+            "grafico_estoque_categoria": {
+                "labels": labels_estoque or ["Produtos"],
+                "valores": valores_estoque or [produtos_estoque],
+            },
+            "grafico_lucro": {
+                "labels": [m["label"] for m in ultimos_meses],
+                "valores": [round(v - c - i, 2) for v, c, i in zip(vendas_por_mes, compras_por_mes, impostos_por_mes)],
+            },
+            "grafico_produtos_vendidos": {
+                "labels": labels_produtos or ["Sem vendas"],
+                "valores": valores_produtos or [0],
+            },
+            "grafico_contas": {
+                "labels": ["Receber", "Pagar"],
+                "valores": [total_receber, total_pagar],
+            },
+            "grafico_impostos": {
+                "labels": [m["label"] for m in ultimos_meses],
+                "valores": impostos_por_mes,
+            },
+            "grafico_pagamento": {
+                "labels": list(formas_pagamento.keys()) or ["Não informado"],
+                "valores": [round(v, 2) for v in formas_pagamento.values()] or [0],
+            },
+            "grafico_saldo": {
+                "labels": [m["label"] for m in ultimos_meses],
+                "valores": saldo_por_mes,
+            },
+            "grafico_baixo_estoque": {
+                "labels": labels_baixo or ["Sem itens críticos"],
+                "valores": valores_baixo or [0],
+            },
+
+            "ultimas_vendas": ultimas_vendas,
+            "baixo_estoque_lista": baixo_estoque,
+            "movimentacoes_recentes": movimentacoes_recentes,
+        })
 
     def do_GET(self):
         parsed_path = urllib.parse.urlparse(self.path)
@@ -543,7 +957,10 @@ class BackendHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            if path == "/api/produtos":
+            if path == "/api/dashboard/resumo":
+                return self.calcular_dashboard_resumo()
+
+            elif path == "/api/produtos":
                 res = supabase.table("produtos").select("*").order("id", desc=True).execute()
                 self.send_json(res.data)
 
@@ -728,34 +1145,119 @@ class BackendHandler(BaseHTTPRequestHandler):
                 receber_res = supabase.table("contas_receber").select("*").execute()
                 pagar_res = supabase.table("contas_pagar").select("*").execute()
 
+                hoje = date.today()
+                limite_12_meses = hoje + timedelta(days=365)
+
                 estoque = sum(
-                    float(p.get("estoque_atual") or 0) * float(p.get("custo_medio") or p.get("preco_custo") or 0)
+                    float(p.get("estoque_atual") or 0)
+                    * float(p.get("custo_medio") or p.get("preco_custo") or 0)
                     for p in produtos.data or []
                 )
 
-                total_receber = self.somar_valores(receber_res.data, apenas_pendente=True)
-                total_pagar = self.somar_valores(pagar_res.data, apenas_pendente=True)
+                total_receber = self.somar_valores(
+                    receber_res.data,
+                    apenas_pendente=True
+                )
+
+                passivo_circulante = 0
+                passivo_nao_circulante = 0
+
+                for conta in pagar_res.data or []:
+                    status = str(conta.get("status") or "").upper()
+
+                    if status in [
+                        "PAGO",
+                        "PAGA",
+                        "QUITADO",
+                        "QUITADA",
+                        "CANCELADO",
+                        "CANCELADA",
+                        "ESTORNADO",
+                        "ESTORNADA",
+                    ]:
+                        continue
+
+                    valor = money(
+                        conta.get("valor_original")
+                        or conta.get("valor")
+                        or 0
+                    )
+
+                    vencimento_raw = conta.get("data_vencimento")
+
+                    if not vencimento_raw:
+                        passivo_circulante += valor
+                        continue
+
+                    try:
+                        vencimento = date.fromisoformat(str(vencimento_raw)[:10])
+
+                        if vencimento <= limite_12_meses:
+                            passivo_circulante += valor
+                        else:
+                            passivo_nao_circulante += valor
+
+                    except Exception:
+                        passivo_circulante += valor
 
                 vendas = supabase.table("vendas").select("*").execute()
                 compras = supabase.table("compras").select("*").execute()
 
-                caixa_estimado = (
-                    sum(float(v.get("total") or 0) for v in vendas.data or [])
-                    - sum(float(c.get("total") or 0) for c in compras.data or [])
+                total_vendas = sum(
+                    float(v.get("total") or 0)
+                    for v in vendas.data or []
+                    if str(v.get("status") or "").upper() not in [
+                        "CANCELADO",
+                        "CANCELADA",
+                        "ESTORNADO",
+                        "ESTORNADA",
+                    ]
                 )
 
-                ativo = round(max(caixa_estimado, 0) + estoque + total_receber, 2)
-                passivo = round(total_pagar, 2)
-                patrimonio_liquido = round(ativo - passivo, 2)
+                total_compras = sum(
+                    float(c.get("total") or 0)
+                    for c in compras.data or []
+                    if str(c.get("status") or "").upper() not in [
+                        "CANCELADO",
+                        "CANCELADA",
+                        "ESTORNADO",
+                        "ESTORNADA",
+                    ]
+                )
+
+                caixa_estimado = total_vendas - total_compras
+
+                ativo_circulante = round(
+                    max(caixa_estimado, 0)
+                    + estoque
+                    + total_receber,
+                    2
+                )
+
+                ativo = ativo_circulante
+
+                passivo_total = round(
+                    passivo_circulante + passivo_nao_circulante,
+                    2
+                )
+
+                patrimonio_liquido = round(
+                    ativo - passivo_total,
+                    2
+                )
 
                 self.send_json({
-                    "ativo": ativo,
-                    "passivo": passivo,
+                    "ativo": round(ativo, 2),
+                    "ativo_circulante": round(ativo_circulante, 2),
+                    "passivo": passivo_total,
+                    "passivo_circulante": round(passivo_circulante, 2),
+                    "passivo_nao_circulante": round(passivo_nao_circulante, 2),
                     "patrimonio_liquido": patrimonio_liquido,
                     "caixa_estimado": round(caixa_estimado, 2),
                     "estoque": round(estoque, 2),
-                    "contas_receber": total_receber,
-                    "contas_pagar": total_pagar,
+                    "contas_receber": round(total_receber, 2),
+                    "contas_pagar": round(passivo_circulante, 2),
+                    "contas_pagar_longo_prazo": round(passivo_nao_circulante, 2),
                 })
 
             elif path == "/api/movimentacoes-estoque":
@@ -1035,21 +1537,69 @@ class BackendHandler(BaseHTTPRequestHandler):
                 compra = supabase.table("compras").insert(compra_payload).execute()
                 compra_id = compra.data[0]["id"]
 
-                conta_pagar_payload = {
-                    "compra_id": compra_id,
-                    "entidade_id": fornecedor_id,
-                    "fornecedor_id": fornecedor_id,
-                    "descricao": f"Compra #{compra_id}",
-                    "valor": total,
-                    "valor_original": total,
-                    "valor_pago": 0,
-                    "data_emissao": date.today().isoformat(),
-                    "data_vencimento": self.normalizar_data_vencimento(data),
-                    "status": "ABERTO",
-                    "estornado": False,
-                }
+                forma_pagamento = str(data.get("forma_pagamento") or "").strip().upper()
+                parcelas = int(data.get("parcelas") or 1)
 
-                supabase.table("contas_pagar").insert(conta_pagar_payload).execute()
+                if parcelas < 1:
+                    parcelas = 1
+
+                if parcelas > 60:
+                    return self.send_error_json("O número máximo permitido é de 60 parcelas.", 400)
+
+                data_vencimento_str = self.normalizar_data_vencimento(data)
+
+                try:
+                    data_primeiro_vencimento = date.fromisoformat(str(data_vencimento_str)[:10])
+                except Exception:
+                    data_primeiro_vencimento = date.today()
+
+                contas_pagar_payload = []
+
+                if forma_pagamento == "A PRAZO" and parcelas > 1:
+                    valor_base = round(total / parcelas, 2)
+                    soma_parcelas = 0
+
+                    for numero_parcela in range(1, parcelas + 1):
+                        if numero_parcela == parcelas:
+                            valor_parcela = round(total - soma_parcelas, 2)
+                        else:
+                            valor_parcela = valor_base
+                            soma_parcelas += valor_parcela
+
+                        vencimento_parcela = self.adicionar_meses(
+                            data_primeiro_vencimento,
+                            numero_parcela - 1
+                        )
+
+                        contas_pagar_payload.append({
+                            "compra_id": compra_id,
+                            "entidade_id": fornecedor_id,
+                            "fornecedor_id": fornecedor_id,
+                            "descricao": f"Compra #{compra_id} - Parcela {numero_parcela}/{parcelas}",
+                            "valor": valor_parcela,
+                            "valor_original": valor_parcela,
+                            "valor_pago": 0,
+                            "data_emissao": date.today().isoformat(),
+                            "data_vencimento": vencimento_parcela.isoformat(),
+                            "status": "ABERTO",
+                            "estornado": False,
+                        })
+                else:
+                    contas_pagar_payload.append({
+                        "compra_id": compra_id,
+                        "entidade_id": fornecedor_id,
+                        "fornecedor_id": fornecedor_id,
+                        "descricao": f"Compra #{compra_id}",
+                        "valor": total,
+                        "valor_original": total,
+                        "valor_pago": 0,
+                        "data_emissao": date.today().isoformat(),
+                        "data_vencimento": data_primeiro_vencimento.isoformat(),
+                        "status": "ABERTO",
+                        "estornado": False,
+                    })
+
+                supabase.table("contas_pagar").insert(contas_pagar_payload).execute()
 
                 for item in itens_payload:
                     item["compra_id"] = compra_id
