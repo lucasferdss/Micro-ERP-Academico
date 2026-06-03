@@ -1062,13 +1062,35 @@ class BackendHandler(BaseHTTPRequestHandler):
                 })
 
             elif path == "/api/lucratividade":
-                itens_res = (
-                    supabase.table("itens_venda")
-                    .select("*")
-                    .execute()
-                )
+                contas_res = supabase.table("contas_receber").select("*").execute()
+                itens_res = supabase.table("itens_venda").select("*").execute()
 
-                itens_venda = self.anexar_produtos_aos_itens_venda(itens_res.data or [])
+                contas = contas_res.data or []
+                itens = itens_res.data or []
+
+                vendas_validas_ids = set()
+
+                for conta in contas:
+                    status = str(conta.get("status") or "").upper()
+
+                    if status in ["CANCELADO", "CANCELADA", "ESTORNADO", "ESTORNADA"]:
+                        continue
+
+                    doc = str(conta.get("numero_documento") or conta.get("descricao") or "")
+                    venda_id = "".join([c for c in doc if c.isdigit()])
+
+                    if venda_id:
+                        vendas_validas_ids.add(venda_id)
+
+                itens_filtrados = []
+
+                for item in itens:
+                    venda_id = str(item.get("venda_id") or "")
+
+                    if venda_id in vendas_validas_ids:
+                        itens_filtrados.append(item)
+
+                itens_venda = self.anexar_produtos_aos_itens_venda(itens_filtrados)
 
                 linhas = []
                 receita_total = 0
@@ -1077,7 +1099,27 @@ class BackendHandler(BaseHTTPRequestHandler):
                 for item in itens_venda:
                     quantidade = parse_decimal(item.get("quantidade", 0))
                     preco = money(item.get("preco_unitario", 0))
+
+                    produto = item.get("produto") or {}
+
                     custo = money(item.get("custo_unitario", 0))
+                    custo_produto = money(
+                        produto.get("custo_medio")
+                        or produto.get("preco_custo")
+                        or 0
+                    )
+
+                    if preco > 0 and custo > preco * 10:
+                        custo = custo_produto
+
+                    if preco > 0 and custo > preco * 10:
+                        custo = custo / 100
+
+                    if preco > 0 and custo > preco * 10:
+                        custo = custo / 1000
+
+                    custo = round(custo, 2)
+
                     receita = round(quantidade * preco, 2)
                     custo_venda = round(quantidade * custo, 2)
                     lucro = round(receita - custo_venda, 2)
@@ -1085,7 +1127,6 @@ class BackendHandler(BaseHTTPRequestHandler):
                     receita_total += receita
                     custo_total += custo_venda
 
-                    produto = item.get("produto") or {}
                     linhas.append({
                         "produto_id": item.get("produto_id"),
                         "produto_nome": produto.get("nome") or f"Produto #{item.get('produto_id')}",
@@ -1123,17 +1164,51 @@ class BackendHandler(BaseHTTPRequestHandler):
                 })
 
             elif path == "/api/dre":
-                vendas = supabase.table("vendas").select("*").execute()
-                receita = sum(float(v.get("total") or 0) for v in vendas.data or [])
-                cmv = self.calcular_cmv_vendas()
-                lucro_bruto = round(receita - cmv, 2)
+                contas_res = supabase.table("contas_receber").select("*").execute()
+                itens_res = supabase.table("itens_venda").select("*").execute()
+
+                contas = contas_res.data or []
+                itens = itens_res.data or []
+
+                vendas_validas_ids = set()
+                receita = 0
+
+                for conta in contas:
+                    status = str(conta.get("status") or "").upper()
+
+                    if status not in ["CANCELADO", "CANCELADA", "ESTORNADO", "ESTORNADA"]:
+                        receita += money(conta.get("valor_original") or conta.get("valor") or 0)
+
+                        doc = str(conta.get("numero_documento") or conta.get("descricao") or "")
+                        venda_id = "".join([c for c in doc if c.isdigit()])
+
+                        if venda_id:
+                            vendas_validas_ids.add(venda_id)
+
+                cmv = 0
+
+                for item in itens:
+                    venda_id = str(item.get("venda_id") or "")
+
+                    if venda_id not in vendas_validas_ids:
+                        continue
+
+                    quantidade = parse_decimal(item.get("quantidade", 0))
+                    custo = money(item.get("custo_unitario", 0))
+
+                    cmv += quantidade * custo
+
+                cmv = round(cmv, 2)
+
                 imposto_simples = round(receita * 0.06, 2)
-                lucro_liquido = round(lucro_bruto - imposto_simples, 2)
+                receita_liquida = round(receita - imposto_simples, 2)
+                lucro_bruto = round(receita_liquida - cmv, 2)
+                lucro_liquido = lucro_bruto
 
                 self.send_json({
                     "receita_bruta": round(receita, 2),
                     "deducoes_impostos": imposto_simples,
-                    "receita_liquida": round(receita - imposto_simples, 2),
+                    "receita_liquida": receita_liquida,
                     "cmv": cmv,
                     "lucro_bruto": lucro_bruto,
                     "lucro_liquido": lucro_liquido,

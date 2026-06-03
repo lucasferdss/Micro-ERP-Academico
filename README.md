@@ -113,7 +113,7 @@ Estruturação contábil básica com suporte para:
    ```
    
    E então, ative o ambiente virtual:
-   * **Windows:** `venv\Scripts\activate`
+   * **Windows:** `python -m venv venv`
    * **Mac/Linux:** `source venv/bin/activate`
 
 2. **Instalação das Dependências**

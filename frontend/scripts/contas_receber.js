@@ -7,25 +7,56 @@ function formatarMoeda(valor) {
 
 function formatarData(data) {
   if (!data) return "-";
-  const partes = String(data).split("-");
+
+  const dataLimpa = String(data).split("T")[0];
+  const partes = dataLimpa.split("-");
+
   if (partes.length !== 3) return data;
+
   return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
 function obterNomeCliente(conta) {
-  const cliente = conta.cliente || {};
+  const cliente = conta.cliente || conta.entidade || {};
+
   return (
     cliente.nome_razao_social ||
     cliente.nome_fantasia ||
     cliente.email ||
+    conta.cliente_nome ||
+    conta.entidade_nome ||
     "-"
   );
 }
 
-function criarBadgeStatus(status) {
-  const statusNormalizado = String(status || "PENDENTE").toUpperCase();
+function obterReferenciaVenda(conta) {
+  return (
+    conta.numero_documento ||
+    conta.descricao ||
+    (conta.venda_id ? `Venda #${conta.venda_id}` : null) ||
+    (conta.pedido_venda_id ? `Venda #${conta.pedido_venda_id}` : null) ||
+    "-"
+  );
+}
 
-  if (statusNormalizado === "PAGO" || statusNormalizado === "RECEBIDO") {
+function obterValorConta(conta) {
+  return Number(
+    conta.valor_original ||
+    conta.valor ||
+    conta.total ||
+    0
+  );
+}
+
+function criarBadgeStatus(status) {
+  const statusNormalizado = String(status || "ABERTO").toUpperCase();
+
+  if (
+    statusNormalizado === "PAGO" ||
+    statusNormalizado === "RECEBIDO" ||
+    statusNormalizado === "QUITADO" ||
+    statusNormalizado === "QUITADA"
+  ) {
     return `<span class="status-pill success">${statusNormalizado}</span>`;
   }
 
@@ -45,18 +76,24 @@ async function carregarContasReceber() {
   const totalPendenteEl = document.getElementById("total-pendente");
 
   try {
-    statusEl.textContent = "Carregando contas a receber...";
+    if (statusEl) statusEl.textContent = "Carregando contas a receber...";
 
     const contas = await API.get("/api/contas-receber");
 
     if (!Array.isArray(contas) || contas.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="7">Nenhuma conta a receber encontrada.</td>
-        </tr>
-      `;
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">Nenhuma conta a receber encontrada.</td>
+          </tr>
+        `;
+      }
 
-      statusEl.textContent = "";
+      if (totalReceberEl) totalReceberEl.textContent = formatarMoeda(0);
+      if (totalPagoEl) totalPagoEl.textContent = formatarMoeda(0);
+      if (totalPendenteEl) totalPendenteEl.textContent = formatarMoeda(0);
+      if (statusEl) statusEl.textContent = "";
+
       return;
     }
 
@@ -64,39 +101,50 @@ async function carregarContasReceber() {
     let totalPago = 0;
     let totalPendente = 0;
 
-    tbody.innerHTML = contas.map((conta) => {
-      const valor = Number(conta.valor || 0);
-      const status = String(conta.status || "PENDENTE").toUpperCase();
+    if (tbody) {
+      tbody.innerHTML = contas.map((conta) => {
+        const valor = obterValorConta(conta);
+        const valorRecebido = Number(conta.valor_recebido || 0);
+        const status = String(conta.status || "ABERTO").toUpperCase();
 
-      totalReceber += valor;
+        totalReceber += valor;
 
-      if (status === "PAGO" || status === "RECEBIDO") {
-        totalPago += valor;
-      } else {
-        totalPendente += valor;
-      }
+        if (
+          status === "PAGO" ||
+          status === "RECEBIDO" ||
+          status === "QUITADO" ||
+          status === "QUITADA"
+        ) {
+          totalPago += valorRecebido > 0 ? valorRecebido : valor;
+        } else {
+          totalPendente += valor - valorRecebido;
+        }
 
-      return `
-        <tr>
-          <td>${conta.id}</td>
-          <td>#${conta.venda_id || "-"}</td>
-          <td>${obterNomeCliente(conta)}</td>
-          <td>${conta.descricao || "-"}</td>
-          <td>${formatarMoeda(valor)}</td>
-          <td>${formatarData(conta.data_vencimento)}</td>
-          <td>${criarBadgeStatus(status)}</td>
-        </tr>
-      `;
-    }).join("");
+        return `
+          <tr>
+            <td>${conta.id}</td>
+            <td>${obterReferenciaVenda(conta)}</td>
+            <td>${obterNomeCliente(conta)}</td>
+            <td>${conta.descricao || "-"}</td>
+            <td>${formatarMoeda(valor)}</td>
+            <td>${formatarData(conta.data_vencimento)}</td>
+            <td>${criarBadgeStatus(status)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
 
-    totalReceberEl.textContent = formatarMoeda(totalReceber);
-    totalPagoEl.textContent = formatarMoeda(totalPago);
-    totalPendenteEl.textContent = formatarMoeda(totalPendente);
+    if (totalReceberEl) totalReceberEl.textContent = formatarMoeda(totalReceber);
+    if (totalPagoEl) totalPagoEl.textContent = formatarMoeda(totalPago);
+    if (totalPendenteEl) totalPendenteEl.textContent = formatarMoeda(totalPendente);
 
-    statusEl.textContent = "";
+    if (statusEl) statusEl.textContent = "";
   } catch (error) {
     console.error(error);
-    statusEl.textContent = "Erro ao carregar contas a receber.";
+
+    if (statusEl) {
+      statusEl.textContent = "Erro ao carregar contas a receber.";
+    }
   }
 }
 
